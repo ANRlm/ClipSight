@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build ClipSight, a lightweight native macOS menu bar app for local OCR. Users trigger a system screen selection flow from the menu bar or a user-configured global shortcut. After selection, the app recognizes Chinese and English text locally with Apple Vision, copies the result to the clipboard, shows a completion notification, and removes temporary screenshot files.
+Build ClipSight, a lightweight native macOS menu bar app for local OCR. Users trigger a system screen selection flow from the menu bar or a user-configured global shortcut. After selection, the app recognizes Chinese and English text locally with Apple Vision, copies the result to the clipboard, shows a concise on-screen HUD, and removes temporary screenshot files.
 
 ClipSight must not provide a preview window, OCR history, custom screenshot overlay, network OCR, or language switching.
 
@@ -11,7 +11,9 @@ ClipSight must not provide a preview window, OCR history, custom screenshot over
 - Target platform: macOS 13 Ventura and later.
 - Language and UI: Swift, SwiftUI, and AppKit where required.
 - Project shape: Swift Package Manager project that can build a macOS executable.
-- App delivery: a helper script packages the SwiftPM executable into `ClipSight.app` with an `Info.plist` suitable for double-click launch and login item registration.
+- App delivery: `script/package_app.sh` packages the SwiftPM executable into `ClipSight.app` with an `Info.plist` suitable for double-click launch and login item registration.
+- App icon: generated locally by `script/generate_app_icon.swift` during packaging.
+- Signing: local packages use ad-hoc signing by default with a stable bundle identifier requirement; `CODESIGN_IDENTITY` can override this for certificate signing.
 - Network use: none.
 
 ## User Experience
@@ -27,7 +29,7 @@ The menu bar menu contains:
 
 There is no default global shortcut. On first launch, the shortcut state is unset. Users can still run OCR from the menu bar until they configure a shortcut.
 
-When OCR succeeds, ClipSight writes recognized text to the general pasteboard and shows a notification such as `已复制 12 行文本`. If no text is detected, it shows a clear no-text notification. If the user cancels the system screenshot selection, the app cleans up and exits the flow without treating it as an error.
+When OCR succeeds, ClipSight writes recognized text to the general pasteboard, stores a menu status such as `已复制 12 行文本`, and shows a short screen HUD such as `已复制到剪贴板`. If no text is detected, it shows a clear no-text HUD. If the user cancels the system screenshot selection, the app cleans up and exits the flow without treating it as an error.
 
 ## Settings Window
 
@@ -49,7 +51,7 @@ The app does not include OCR language selection. Recognition defaults to Simplif
 
 ### `ClipSightApp`
 
-SwiftUI app entry point. Owns app-level state, declares `MenuBarExtra`, declares the `Settings` scene, and wires actions to the coordinator.
+SwiftUI app entry point. Owns app-level state, declares `MenuBarExtra`, keeps the app menu-bar only, and wires actions to the coordinator and settings window presenter.
 
 ### `AppState`
 
@@ -59,7 +61,7 @@ Observable state container for:
 - Permission statuses.
 - Launch-at-login state.
 - Current OCR progress state.
-- Last user-facing error or notification summary.
+- Last user-facing status or error summary.
 
 ### `CaptureOCRCoordinator`
 
@@ -69,7 +71,7 @@ Coordinates the end-to-end flow:
 2. Ask `ScreenCaptureService` for a selected screenshot.
 3. Pass the image file to `OCRService`.
 4. Write recognized text through `ClipboardService`.
-5. Notify the user through `NotificationService`.
+5. Show a concise HUD through `StatusHUDPresenter`.
 6. Clean temporary files in all success, cancel, and error paths.
 
 ### `HotKeyManager`
@@ -138,6 +140,8 @@ Opening settings:
 
 The app explains missing permissions in settings and shows actionable errors when capture cannot proceed.
 
+Screen recording is required for OCR. Accessibility is shown as optional because the current global shortcut implementation uses Carbon `RegisterEventHotKey` and does not depend on accessibility trust.
+
 ### `LaunchAtLoginService`
 
 Wraps `SMAppService.mainApp` for reading and toggling launch-at-login state.
@@ -146,9 +150,9 @@ Wraps `SMAppService.mainApp` for reading and toggling launch-at-login state.
 
 Creates screenshot paths under the system temporary directory and deletes them after the flow. Cleanup runs after success, cancellation, OCR failure, and clipboard failure.
 
-### `NotificationService`
+### `StatusHUDPresenter`
 
-Uses `UserNotifications` to request notification authorization when needed and post concise completion or error notifications. If notifications are denied, the app still functions; errors remain visible through settings/menu state where relevant.
+Uses a non-activating `NSPanel` with SwiftUI content to show short success and failure status near the top-center of the screen. HUD messages do not include OCR content. The app does not request `UserNotifications` permission.
 
 ## Data Model
 
@@ -174,10 +178,8 @@ Stores:
 
 Errors are classified into user-facing cases:
 
-- No shortcut configured.
 - Shortcut registration failed.
 - Screen recording permission missing.
-- Accessibility permission missing.
 - Screenshot cancelled.
 - Screenshot failed.
 - OCR failed.
@@ -193,6 +195,7 @@ Build verification:
 
 - `swift build`
 - package script execution for `.app` creation
+- `codesign --verify --deep --strict dist/ClipSight.app`
 
 Runtime verification:
 
@@ -200,10 +203,12 @@ Runtime verification:
 - Confirm menu bar item appears.
 - Confirm settings window opens.
 - Configure and clear a shortcut.
+- Confirm missing screen recording permission is shown in settings and opens System Settings only from an explicit action or OCR attempt.
 - Trigger OCR from menu bar.
 - Trigger OCR from configured shortcut.
 - Cancel screenshot selection and confirm no stale temp files remain.
 - Capture a region with Chinese and English text and confirm recognized text lands in the clipboard.
+- Confirm success and failure HUDs render clearly in light and dark mode.
 - Toggle launch at login and confirm state changes.
 
 Some runtime checks require user-controlled macOS permissions and cannot be fully automated in CI.
@@ -218,7 +223,8 @@ The README must include:
 - App bundle packaging command.
 - How to run the app.
 - No default shortcut; users configure their own in settings.
-- Required permissions: screen recording, accessibility, notifications.
+- Required permissions: screen recording.
+- Optional status display for accessibility.
 - OCR is fully local through Apple Vision and does not call network services.
 
 ## Out Of Scope
