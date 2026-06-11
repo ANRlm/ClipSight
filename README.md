@@ -22,6 +22,22 @@ swift build
 ./script/package_app.sh --configuration debug
 ```
 
+## 测试
+
+运行常规 Swift Testing 测试：
+
+```bash
+./script/test.sh
+```
+
+脚本会优先使用 `/Applications/Xcode.app` 内的 Swift 工具链，并补齐 Swift Testing 在部分 Command Line Tools 环境下需要的框架路径。
+
+可选 OCR 集成验证默认不运行。它会生成一张临时高对比度中英文图片，调用 Apple Vision，并检查能识别英文和中文关键词：
+
+```bash
+CLIPSIGHT_RUN_OCR_INTEGRATION=1 ./script/test.sh --filter OCRServiceIntegrationTests
+```
+
 ## 打包
 
 生成 release app bundle：
@@ -40,6 +56,12 @@ dist/ClipSight.app
 
 ```bash
 /usr/bin/open -n dist/ClipSight.app
+```
+
+验证签名：
+
+```bash
+codesign --verify --deep --strict dist/ClipSight.app
 ```
 
 开发运行：

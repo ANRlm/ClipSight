@@ -59,7 +59,7 @@ public final class StatusHUDPresenter: StatusHUDPresenting {
 
     private func makeWindow() -> NSPanel {
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 260, height: 62),
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 58),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -92,6 +92,7 @@ private struct StatusHUDView: View {
         HStack(spacing: 10) {
             Image(systemName: presentation.isSuccess ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                 .font(.system(size: 18, weight: .semibold))
+                .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(presentation.isSuccess ? .green : .orange)
 
             Text(presentation.message)
@@ -99,12 +100,9 @@ private struct StatusHUDView: View {
                 .lineLimit(1)
                 .foregroundStyle(.primary)
         }
-        .padding(.horizontal, 18)
-        .frame(width: 260, height: 62)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(.white.opacity(0.16), lineWidth: 1)
-        }
+        .padding(.horizontal, 20)
+        .frame(width: 320, height: 58)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: .black.opacity(0.18), radius: 18, x: 0, y: 10)
     }
 }

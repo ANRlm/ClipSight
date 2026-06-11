@@ -13,6 +13,8 @@ struct ClipSightApp: App {
     private let launchAtLoginService: LaunchAtLoginService
     private let coordinator: CaptureOCRCoordinator
     private let settingsWindowPresenter: SettingsWindowPresenter
+    private let permissionGuidanceCoordinator: PermissionGuidanceCoordinator
+    private let openSettingsWindowAction: @MainActor () -> Void
 
     init() {
         let state = AppState()
@@ -30,21 +32,83 @@ struct ClipSightApp: App {
             temporaryFileCleaner: TemporaryFileCleaner()
         )
 
+        func registerHotKey(_ hotKey: HotKey?) {
+            do {
+                try hotKeyManager.register(hotKey)
+                state.hotKeyRegistrationError = nil
+            } catch {
+                state.hotKeyRegistrationError = error.localizedDescription
+            }
+        }
+
+        let updateHotKey: (HotKey) -> Void = { hotKey in
+            state.setHotKey(hotKey)
+            registerHotKey(hotKey)
+        }
+
+        let clearHotKey: () -> Void = {
+            state.clearHotKey()
+            state.hotKeyRegistrationError = nil
+            hotKeyManager.unregister()
+        }
+
+        let setLaunchAtLogin: (Bool) -> Void = { enabled in
+            do {
+                try launchAtLoginService.setEnabled(enabled)
+                state.launchAtLoginEnabled = launchAtLoginService.isEnabled
+            } catch {
+                state.launchAtLoginEnabled = launchAtLoginService.isEnabled
+                state.lastMessage = error.localizedDescription
+            }
+        }
+
+        let refreshPermissions: () -> Void = {
+            state.applyPermissionSnapshot(permissionService.currentSnapshot())
+            state.launchAtLoginEnabled = launchAtLoginService.isEnabled
+        }
+
+        let openSettingsWindow: @MainActor () -> Void = {
+            settingsWindowPresenter.show {
+                SettingsView(
+                    appState: state,
+                    onRecordHotKey: updateHotKey,
+                    onClearHotKey: clearHotKey,
+                    onSetLaunchAtLogin: setLaunchAtLogin,
+                    onRefreshPermissions: refreshPermissions,
+                    onOpenScreenRecordingSettings: permissionService.openScreenRecordingSettings,
+                    onOpenAccessibilitySettings: permissionService.openAccessibilitySettings
+                )
+            }
+        }
+
+        let permissionGuidanceCoordinator = PermissionGuidanceCoordinator(
+            appState: state,
+            permissionService: permissionService,
+            launchAtLoginService: launchAtLoginService,
+            openSettingsWindow: openSettingsWindow
+        )
+
         _appState = StateObject(wrappedValue: state)
         self.permissionService = permissionService
         self.launchAtLoginService = launchAtLoginService
         self.hotKeyManager = hotKeyManager
         self.settingsWindowPresenter = settingsWindowPresenter
         self.coordinator = coordinator
+        self.permissionGuidanceCoordinator = permissionGuidanceCoordinator
+        self.openSettingsWindowAction = openSettingsWindow
 
-        state.applyPermissionSnapshot(permissionService.currentSnapshot())
-        state.launchAtLoginEnabled = launchAtLoginService.isEnabled
+        permissionGuidanceCoordinator.refreshState()
+        permissionGuidanceCoordinator.startObservingApplicationActivation()
 
         hotKeyManager.setHandler { [coordinator] in
             coordinator.startCapture()
         }
 
-        registerStoredHotKey(state.hotKey, state: state, manager: hotKeyManager)
+        registerHotKey(state.hotKey)
+
+        Task { @MainActor in
+            permissionGuidanceCoordinator.handleLaunch()
+        }
     }
 
     var body: some Scene {
@@ -71,7 +135,7 @@ struct ClipSightApp: App {
             Divider()
 
             Button {
-                openSettingsWindow()
+                openSettingsWindowAction()
             } label: {
                 Label("设置...", systemImage: "gearshape")
             }
@@ -81,59 +145,6 @@ struct ClipSightApp: App {
             } label: {
                 Label("退出", systemImage: "power")
             }
-        }
-    }
-
-    private func updateHotKey(_ hotKey: HotKey) {
-        appState.setHotKey(hotKey)
-        registerStoredHotKey(hotKey, state: appState, manager: hotKeyManager)
-    }
-
-    private func clearHotKey() {
-        appState.clearHotKey()
-        appState.hotKeyRegistrationError = nil
-        hotKeyManager.unregister()
-    }
-
-    private func setLaunchAtLogin(_ enabled: Bool) {
-        do {
-            try launchAtLoginService.setEnabled(enabled)
-            appState.launchAtLoginEnabled = launchAtLoginService.isEnabled
-        } catch {
-            appState.launchAtLoginEnabled = launchAtLoginService.isEnabled
-            appState.lastMessage = error.localizedDescription
-        }
-    }
-
-    private func refreshPermissions() {
-        appState.applyPermissionSnapshot(permissionService.currentSnapshot())
-        appState.launchAtLoginEnabled = launchAtLoginService.isEnabled
-    }
-
-    private func openSettingsWindow() {
-        settingsWindowPresenter.show {
-            SettingsView(
-                appState: appState,
-                onRecordHotKey: updateHotKey,
-                onClearHotKey: clearHotKey,
-                onSetLaunchAtLogin: setLaunchAtLogin,
-                onRefreshPermissions: refreshPermissions,
-                onOpenScreenRecordingSettings: permissionService.openScreenRecordingSettings,
-                onOpenAccessibilitySettings: permissionService.openAccessibilitySettings
-            )
-        }
-    }
-
-    private func registerStoredHotKey(
-        _ hotKey: HotKey?,
-        state: AppState,
-        manager: HotKeyManager
-    ) {
-        do {
-            try manager.register(hotKey)
-            state.hotKeyRegistrationError = nil
-        } catch {
-            state.hotKeyRegistrationError = error.localizedDescription
         }
     }
 }

@@ -142,6 +142,10 @@ The app explains missing permissions in settings and shows actionable errors whe
 
 Screen recording is required for OCR. Accessibility is shown as optional because the current global shortcut implementation uses Carbon `RegisterEventHotKey` and does not depend on accessibility trust.
 
+On first launch, if screen recording permission is missing, ClipSight opens its own settings window once to explain the required permission. This first-launch prompt is stored in `UserDefaults` and does not repeatedly interrupt subsequent launches. OCR attempts made without screen recording permission still open the relevant macOS System Settings pane.
+
+When the app becomes active again, ClipSight refreshes screen recording, accessibility, and launch-at-login status so returning from System Settings updates the settings UI without requiring a manual refresh.
+
 ### `LaunchAtLoginService`
 
 Wraps `SMAppService.mainApp` for reading and toggling launch-at-login state.
@@ -194,16 +198,19 @@ Screenshot cancellation is not treated as a failure. Cleanup failure is logged b
 Build verification:
 
 - `swift build`
+- `./script/test.sh`
 - package script execution for `.app` creation
 - `codesign --verify --deep --strict dist/ClipSight.app`
+- Optional OCR integration verification with `CLIPSIGHT_RUN_OCR_INTEGRATION=1 ./script/test.sh --filter OCRServiceIntegrationTests`
 
 Runtime verification:
 
 - Launch app bundle.
 - Confirm menu bar item appears.
-- Confirm settings window opens.
+- Confirm settings window opens automatically once on first launch when screen recording permission is missing.
 - Configure and clear a shortcut.
 - Confirm missing screen recording permission is shown in settings and opens System Settings only from an explicit action or OCR attempt.
+- Confirm permission state refreshes after returning from System Settings.
 - Trigger OCR from menu bar.
 - Trigger OCR from configured shortcut.
 - Cancel screenshot selection and confirm no stale temp files remain.

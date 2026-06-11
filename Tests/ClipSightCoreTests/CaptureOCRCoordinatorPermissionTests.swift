@@ -115,6 +115,42 @@ struct CaptureOCRCoordinatorPermissionTests {
         #expect(appState.lastMessage == "已复制 2 行文本")
         #expect(statusPresenter.lastPresentation == .success("已复制到剪贴板"))
     }
+
+    @Test
+    func presentsFailureHUDWithUnderlyingErrorReasonWhenOCRFails() async {
+        let appState = AppState()
+        let permissionService = StubPermissionService(
+            snapshot: PermissionSnapshot(
+                screenRecording: PermissionStatus(
+                    title: "屏幕录制",
+                    detail: "允许读取截图",
+                    isGranted: true
+                ),
+                accessibility: PermissionStatus(
+                    title: "辅助功能",
+                    detail: "允许快捷键",
+                    isGranted: true,
+                    isRequired: false
+                )
+            )
+        )
+        let screenCaptureService = StubScreenCaptureService(result: .captured(URL(fileURLWithPath: "/tmp/capture.png")))
+        let statusPresenter = StubStatusHUDPresenter()
+        let coordinator = CaptureOCRCoordinator(
+            appState: appState,
+            permissionService: permissionService,
+            screenCaptureService: screenCaptureService,
+            ocrService: StubOCRService(error: OCRServiceError.recognitionFailed("图像无法读取")),
+            clipboardService: StubClipboardService(),
+            statusPresenter: statusPresenter,
+            temporaryFileCleaner: StubTemporaryFileCleaner()
+        )
+
+        await coordinator.captureOnce()
+
+        #expect(appState.lastMessage == "OCR 识别失败：图像无法读取")
+        #expect(statusPresenter.lastPresentation == .failure("OCR 识别失败：图像无法读取"))
+    }
 }
 
 @MainActor
@@ -155,14 +191,18 @@ private final class StubScreenCaptureService: ScreenCapturing {
 }
 
 private final class StubOCRService: TextRecognizing {
-    private let text: String
+    private let result: Result<String, Error>
 
     init(text: String = "") {
-        self.text = text
+        self.result = .success(text)
+    }
+
+    init(error: Error) {
+        self.result = .failure(error)
     }
 
     func recognizeText(in imageURL: URL) async throws -> String {
-        text
+        try result.get()
     }
 }
 

@@ -2,7 +2,7 @@ import Foundation
 import ServiceManagement
 
 @MainActor
-public final class LaunchAtLoginService {
+public final class LaunchAtLoginService: LaunchAtLoginManaging {
     public init() {}
 
     public var isEnabled: Bool {

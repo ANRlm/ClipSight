@@ -82,7 +82,8 @@ public final class CaptureOCRCoordinator {
         } catch OCRServiceError.noTextRecognized {
             finishWithMessage("未识别到文本", presentation: .failure("未识别到文本"))
         } catch {
-            finishWithMessage(error.localizedDescription, presentation: .failure("识别失败"))
+            let message = error.localizedDescription
+            finishWithMessage(message, presentation: .failure(message))
         }
     }
 
