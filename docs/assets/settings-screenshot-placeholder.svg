@@ -1,0 +1,34 @@
+<svg width="1280" height="800" viewBox="0 0 1280 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="800" rx="32" fill="#F4F4F6"/>
+  <rect x="64" y="56" width="1152" height="688" rx="30" fill="white"/>
+  <rect x="64.5" y="56.5" width="1151" height="687" rx="29.5" stroke="#D4D4D8"/>
+  <circle cx="102" cy="92" r="12" fill="#FF5F57"/>
+  <circle cx="140" cy="92" r="12" fill="#FFBD2E"/>
+  <circle cx="178" cy="92" r="12" fill="#28C840"/>
+  <text x="224" y="103" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="24" font-weight="700" fill="#737373">ClipSight Settings</text>
+  <rect x="112" y="148" width="1056" height="96" rx="24" fill="#FAFAFA"/>
+  <rect x="148" y="174" width="44" height="44" rx="12" fill="#111827"/>
+  <path d="M164 186H155V195" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M176 186H185V195" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M164 206H155V197" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M176 206H185V197" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <rect x="162" y="193" width="17" height="3" rx="1.5" fill="white"/>
+  <rect x="158" y="200" width="25" height="3" rx="1.5" fill="white"/>
+  <text x="220" y="190" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="30" font-weight="750" fill="#1F1F22">ClipSight</text>
+  <text x="220" y="225" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="20" fill="#737373">Select a screen region, recognize local text, and copy it to the clipboard.</text>
+  <rect x="112" y="280" width="1056" height="118" rx="22" fill="#F3F3F4"/>
+  <text x="156" y="328" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="25" font-weight="700" fill="#333333">Shortcut</text>
+  <text x="156" y="360" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="18" fill="#737373">Configure the global OCR trigger.</text>
+  <rect x="836" y="317" width="116" height="40" rx="12" fill="#E2E2E4"/>
+  <text x="872" y="344" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="17" font-weight="650" fill="#3F3F46">Record</text>
+  <rect x="112" y="426" width="1056" height="154" rx="22" fill="#F3F3F4"/>
+  <text x="156" y="474" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="25" font-weight="700" fill="#333333">Permissions</text>
+  <text x="156" y="506" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="18" fill="#737373">Screen Recording is required. Accessibility is optional.</text>
+  <rect x="948" y="462" width="94" height="36" rx="18" fill="#DCFCE7"/>
+  <text x="972" y="486" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="16" font-weight="700" fill="#16A34A">Granted</text>
+  <rect x="112" y="608" width="1056" height="96" rx="22" fill="#F3F3F4"/>
+  <text x="156" y="656" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="25" font-weight="700" fill="#333333">HUD Position</text>
+  <rect x="904" y="636" width="92" height="40" rx="12" fill="#E2E2E4"/>
+  <text x="931" y="663" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="17" font-weight="650" fill="#3F3F46">Adjust</text>
+  <text x="508" y="764" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="18" fill="#A1A1AA">Placeholder screenshot. Replace with a real settings screenshot before wider distribution.</text>
+</svg>
