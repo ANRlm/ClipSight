@@ -84,6 +84,16 @@ public struct SettingsView: View {
                     actionTitle: strings.openButtonTitle,
                     action: onOpenScreenRecordingSettings
                 )
+                .help(strings.openScreenRecordingSettingsHint)
+
+                if appState.screenRecordingPermission.requiresAction {
+                    InlineNotice(
+                        systemImage: "exclamationmark.triangle.fill",
+                        text: strings.screenRecordingMissingGuidance,
+                        color: .orange
+                    )
+                    .accessibilityLabel(strings.screenRecordingMissingGuidance)
+                }
 
                 SectionDivider()
 
@@ -93,6 +103,7 @@ public struct SettingsView: View {
                     actionTitle: strings.openButtonTitle,
                     action: onOpenAccessibilitySettings
                 )
+                .help(strings.openAccessibilitySettingsHint)
 
                 SectionDivider()
 
@@ -111,6 +122,9 @@ public struct SettingsView: View {
                         Label(strings.refreshButtonTitle, systemImage: "arrow.clockwise")
                     }
                     .controlSize(.small)
+                    .accessibilityLabel(strings.refreshButtonTitle)
+                    .accessibilityHint(strings.refreshPermissionsHint)
+                    .help(strings.refreshPermissionsHint)
                 }
             }
 
@@ -131,6 +145,9 @@ public struct SettingsView: View {
                     .labelsHidden()
                     .toggleStyle(.switch)
                     .controlSize(.regular)
+                    .accessibilityLabel(strings.launchAtLoginTitle)
+                    .accessibilityHint(strings.launchAtLoginHint)
+                    .help(strings.launchAtLoginHint)
                 }
 
                 SectionDivider()
@@ -156,6 +173,9 @@ public struct SettingsView: View {
                     .pickerStyle(.menu)
                     .controlSize(.small)
                     .frame(width: 126)
+                    .accessibilityLabel(strings.languageTitle)
+                    .accessibilityHint(strings.languagePickerHint)
+                    .help(strings.languagePickerHint)
                 }
 
                 SectionDivider()
@@ -178,6 +198,9 @@ public struct SettingsView: View {
                             Label(strings.adjustButtonTitle, systemImage: "cursorarrow.motionlines")
                         }
                         .controlSize(.small)
+                        .accessibilityLabel(strings.adjustButtonTitle)
+                        .accessibilityHint(strings.adjustHUDPlacementHint)
+                        .help(strings.adjustHUDPlacementHint)
 
                         Button {
                             onResetHUDPlacement()
@@ -185,6 +208,9 @@ public struct SettingsView: View {
                             Label(strings.resetButtonTitle, systemImage: "arrow.counterclockwise")
                         }
                         .controlSize(.small)
+                        .accessibilityLabel(strings.resetButtonTitle)
+                        .accessibilityHint(strings.resetHUDPlacementHint)
+                        .help(strings.resetHUDPlacementHint)
                     }
                 }
             }
@@ -314,8 +340,11 @@ private struct PermissionRow: View {
                 Label(actionTitle, systemImage: "arrow.up.right")
             }
             .controlSize(.small)
+            .accessibilityLabel("\(actionTitle) \(status.title)")
+            .accessibilityHint(status.detail)
         }
         .frame(minHeight: 42)
+        .accessibilityElement(children: .combine)
     }
 
     private var iconName: String {

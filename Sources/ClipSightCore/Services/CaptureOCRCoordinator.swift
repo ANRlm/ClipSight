@@ -10,7 +10,7 @@ public final class CaptureOCRCoordinator {
     private let clipboardService: any ClipboardWriting
     private let temporaryFileCleaner: any TemporaryFileCleaning
     private let statusHUDPresenter: (any StatusHUDPresenting)?
-    private let logger = Logger(subsystem: ClipSightLogging.subsystem, category: "CaptureOCR")
+    private let logger = Logger(subsystem: ClipSightLogging.subsystem, category: ClipSightLogging.Category.captureOCR)
 
     public init(
         appState: AppState,
@@ -53,6 +53,7 @@ public final class CaptureOCRCoordinator {
     }
 
     private func performCapture() async {
+        let startedAt = Date()
         appState.lastMessage = appState.strings.ocrCapturingMessage
         statusHUDPresenter?.hide()
         logger.info("Capture OCR started")
@@ -74,6 +75,7 @@ public final class CaptureOCRCoordinator {
         guard permissions.screenRecording.isGranted else {
             permissionService.openScreenRecordingSettings()
             logger.info("Screen recording permission missing; opened System Settings")
+            recordCaptureSummary(.permissionMissing, startedAt: startedAt, errorCategory: "ScreenRecordingPermission")
             finishWithMessage(appState.strings.permissionMissingOpenedSettingsMessage)
             return
         }
@@ -83,6 +85,7 @@ public final class CaptureOCRCoordinator {
 
             guard case .captured(let imageURL) = captureResult else {
                 logger.info("Capture OCR cancelled by user")
+                recordCaptureSummary(.cancelled, startedAt: startedAt)
                 appState.lastMessage = appState.strings.captureCancelledMessage
                 return
             }
@@ -91,17 +94,48 @@ public final class CaptureOCRCoordinator {
             let lineCount = try clipboardService.write(text)
             let message = appState.strings.copiedLinesMessage(lineCount)
             statusHUDPresenter?.show(.success)
+            recordCaptureSummary(.success, startedAt: startedAt, recognizedLineCount: lineCount)
             logger.info("Capture OCR succeeded with \(lineCount, privacy: .public) recognized lines copied")
             finishWithMessage(message)
         } catch OCRServiceError.noTextRecognized {
             statusHUDPresenter?.show(.noText)
+            recordCaptureSummary(.noText, startedAt: startedAt)
             logger.info("Capture OCR completed with no recognized text")
             finishWithMessage(appState.strings.noTextRecognizedMessage)
         } catch {
             let message = appState.strings.errorMessage(for: error)
             statusHUDPresenter?.show(.failure)
+            recordCaptureSummary(.failure, startedAt: startedAt, errorCategory: errorCategory(for: error))
             logger.error("Capture OCR failed: \(message, privacy: .public)")
             finishWithMessage(message)
+        }
+    }
+
+    private func recordCaptureSummary(
+        _ result: LastCaptureSummary.Result,
+        startedAt: Date,
+        recognizedLineCount: Int? = nil,
+        errorCategory: String? = nil
+    ) {
+        let elapsedMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
+        appState.lastCaptureSummary = LastCaptureSummary(
+            result: result,
+            durationMilliseconds: elapsedMilliseconds,
+            recognizedLineCount: recognizedLineCount,
+            errorCategory: errorCategory
+        )
+    }
+
+    private func errorCategory(for error: Error) -> String {
+        switch error {
+        case is ScreenCaptureError:
+            return "ScreenCaptureError"
+        case is OCRServiceError:
+            return "OCRServiceError"
+        case is ClipboardServiceError:
+            return "ClipboardServiceError"
+        default:
+            return String(describing: type(of: error))
         }
     }
 

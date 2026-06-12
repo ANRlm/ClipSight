@@ -3,17 +3,19 @@ import OSLog
 import Vision
 
 public final class OCRService: TextRecognizing {
-    private static let logger = Logger(subsystem: ClipSightLogging.subsystem, category: "OCR")
+    private static let logger = Logger(subsystem: ClipSightLogging.subsystem, category: ClipSightLogging.Category.ocr)
 
     public init() {}
 
     public func recognizeText(in imageURL: URL) async throws -> String {
         try await Task.detached(priority: .userInitiated) {
             let startedAt = Date()
+            let recognitionLanguages = ["zh-Hans", "en-US"]
             let request = VNRecognizeTextRequest()
             request.recognitionLevel = .accurate
-            request.recognitionLanguages = ["zh-Hans", "en-US"]
+            request.recognitionLanguages = recognitionLanguages
             request.usesLanguageCorrection = true
+            Self.logger.info("OCR request started languages=\(recognitionLanguages.joined(separator: ","), privacy: .public)")
 
             let handler = VNImageRequestHandler(url: imageURL, options: [:])
 

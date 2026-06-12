@@ -3,6 +3,14 @@ import XCTest
 
 @MainActor
 final class DiagnosticReportTests: XCTestCase {
+    func testLoggingSubsystemUsesOfficialBundleIdentifierAndCategories() {
+        XCTAssertEqual(ClipSightLogging.subsystem, "com.anrlm.ClipSight")
+        XCTAssertEqual(ClipSightLogging.Category.captureOCR, "CaptureOCR")
+        XCTAssertEqual(ClipSightLogging.Category.permissions, "Permissions")
+        XCTAssertEqual(ClipSightLogging.Category.clipboard, "Clipboard")
+        XCTAssertEqual(ClipSightLogging.Category.hud, "HUD")
+    }
+
     func testDiagnosticReportOmitsPotentialOCRTextAndLocalPaths() {
         let appState = AppState()
         appState.lastMessage = "secret recognized text from /Users/example/Desktop/capture.png"
@@ -11,7 +19,8 @@ final class DiagnosticReportTests: XCTestCase {
             appState: appState,
             appVersion: "1.2.3",
             buildNumber: "45",
-            bundleIdentifier: "com.example.ClipSight"
+            bundleIdentifier: "com.example.ClipSight",
+            operatingSystemVersion: "macOS Test"
         )
 
         XCTAssertFalse(report.contains("secret recognized text"))
@@ -25,6 +34,12 @@ final class DiagnosticReportTests: XCTestCase {
         appState.launchAtLoginEnabled = true
         appState.isCapturing = true
         appState.setHUDPlacement(HUDPlacement(x: 0.25, y: 0.75))
+        appState.lastCaptureSummary = LastCaptureSummary(
+            result: .success,
+            occurredAt: Date(timeIntervalSince1970: 1_800_000_000),
+            durationMilliseconds: 842,
+            recognizedLineCount: 3
+        )
         appState.applyPermissionSnapshot(
             PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -45,15 +60,18 @@ final class DiagnosticReportTests: XCTestCase {
             appState: appState,
             appVersion: "1.2.3",
             buildNumber: "45",
-            bundleIdentifier: "com.example.ClipSight"
+            bundleIdentifier: "com.example.ClipSight",
+            operatingSystemVersion: "macOS Test"
         )
 
         XCTAssertTrue(report.contains("Bundle ID: com.example.ClipSight"))
         XCTAssertTrue(report.contains("Version: 1.2.3 (45)"))
+        XCTAssertTrue(report.contains("macOS: macOS Test"))
         XCTAssertTrue(report.contains("Screen Recording: granted"))
         XCTAssertTrue(report.contains("Accessibility: missing optional"))
         XCTAssertTrue(report.contains("Launch At Login: enabled"))
         XCTAssertTrue(report.contains("Capture Running: true"))
         XCTAssertTrue(report.contains("HUD Placement: x=0.250 y=0.750"))
+        XCTAssertTrue(report.contains("Last Capture: result=success duration_ms=842 lines=3"))
     }
 }

@@ -106,10 +106,51 @@ final class OCRTextFormatterTests: XCTestCase {
         XCTAssertEqual(text, "金额\nAmount\n$128.00\n税费\nTax\n$8.00")
     }
 
+    func testUsesTextHeightToKeepLargeJitteredRowTogether() {
+        let lines = [
+            line("职位", x: 0.08, top: 0.68, height: 0.10),
+            line("Name", x: 0.36, top: 0.865, height: 0.10),
+            line("姓名", x: 0.08, top: 0.92, height: 0.10),
+            line("Title", x: 0.36, top: 0.625, height: 0.10)
+        ]
+
+        let text = OCRTextFormatter.formattedText(from: lines)
+
+        XCTAssertEqual(text, "姓名\nName\n职位\nTitle")
+    }
+
+    func testKeepsSmallAdjacentRowsSeparateWhenHorizontalPositionsOverlap() {
+        let lines = [
+            line("row two left", x: 0.08, top: 0.86, height: 0.02),
+            line("row one right", x: 0.62, top: 0.90, height: 0.02)
+        ]
+
+        let text = OCRTextFormatter.formattedText(from: lines)
+
+        XCTAssertEqual(text, "row one right\nrow two left")
+    }
+
+    func testFormatsTwoColumnParagraphsByVisualRows() {
+        let lines = [
+            line("右二", x: 0.62, top: 0.66, height: 0.04),
+            line("左一", x: 0.08, top: 0.88, height: 0.04),
+            line("右一", x: 0.62, top: 0.875, height: 0.04),
+            line("左二", x: 0.08, top: 0.655, height: 0.04)
+        ]
+
+        let text = OCRTextFormatter.formattedText(from: lines)
+
+        XCTAssertEqual(text, "左一\n右一\n左二\n右二")
+    }
+
     private func line(_ text: String, x: CGFloat, top: CGFloat) -> OCRTextLine {
+        line(text, x: x, top: top, height: 0.05)
+    }
+
+    private func line(_ text: String, x: CGFloat, top: CGFloat, height: CGFloat) -> OCRTextLine {
         OCRTextLine(
             text: text,
-            boundingBox: CGRect(x: x, y: top - 0.05, width: 0.22, height: 0.05)
+            boundingBox: CGRect(x: x, y: top - height, width: 0.22, height: height)
         )
     }
 }

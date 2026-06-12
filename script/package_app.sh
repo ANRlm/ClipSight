@@ -24,19 +24,23 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       cat >&2 <<'USAGE'
-usage: script/package_app.sh [--configuration debug|release] [--distribution local|developer-id]
+usage: script/package_app.sh [--configuration debug|release] [--distribution local|developer-id|notarized]
 
 Distributions:
-  local         Build dist/ClipSight.app with ad-hoc signing. This is the default.
-  developer-id Build, sign with Developer ID, create a notarization-ready zip,
-                and notarize/staple when NOTARYTOOL_PROFILE is set.
+  local         Build dist/ClipSight.app with ad-hoc signing and create
+                dist/ClipSight-<version>-local.zip. This is the default.
+  developer-id Build, sign with Developer ID, and create
+                dist/ClipSight-<version>-developer-id.zip for manual notarization.
+  notarized    Build, sign with Developer ID, submit to notarytool, staple,
+                and create dist/ClipSight-<version>.zip.
 
 Developer ID environment:
   CODESIGN_IDENTITY     Required. Developer ID Application signing identity.
   CLIPSIGHT_BUNDLE_ID   Required. Release bundle identifier.
-  MARKETING_VERSION     Optional, defaults to 0.3.0.
+  MARKETING_VERSION     Optional, defaults to 0.4.0.
   BUILD_NUMBER          Optional, defaults to 1.
-  NOTARYTOOL_PROFILE    Optional. Keychain profile for xcrun notarytool.
+  NOTARYTOOL_PROFILE    Required for --distribution notarized. Keychain profile
+                        for xcrun notarytool.
 USAGE
       exit 0
       ;;
@@ -52,14 +56,14 @@ if [[ "$CONFIGURATION" != "debug" && "$CONFIGURATION" != "release" ]]; then
   exit 2
 fi
 
-if [[ "$DISTRIBUTION" != "local" && "$DISTRIBUTION" != "developer-id" ]]; then
-  echo "distribution must be local or developer-id" >&2
+if [[ "$DISTRIBUTION" != "local" && "$DISTRIBUTION" != "developer-id" && "$DISTRIBUTION" != "notarized" ]]; then
+  echo "distribution must be local, developer-id, or notarized" >&2
   exit 2
 fi
 
 APP_NAME="ClipSight"
 BUNDLE_ID="${CLIPSIGHT_BUNDLE_ID:-com.local.ClipSight}"
-MARKETING_VERSION="${MARKETING_VERSION:-0.3.0}"
+MARKETING_VERSION="${MARKETING_VERSION:-0.4.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-1}"
 MIN_SYSTEM_VERSION="13.0"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -72,16 +76,33 @@ APP_BINARY="$APP_MACOS/$APP_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 ICONSET_DIR="$DIST_DIR/AppIcon.iconset"
 ICON_FILE="$APP_RESOURCES/AppIcon.icns"
-ZIP_FILE="$DIST_DIR/$APP_NAME-$MARKETING_VERSION-$BUILD_NUMBER.zip"
+case "$DISTRIBUTION" in
+  local)
+    ZIP_FILE="$DIST_DIR/$APP_NAME-$MARKETING_VERSION-local.zip"
+    ;;
+  developer-id)
+    ZIP_FILE="$DIST_DIR/$APP_NAME-$MARKETING_VERSION-developer-id.zip"
+    ;;
+  notarized)
+    ZIP_FILE="$DIST_DIR/$APP_NAME-$MARKETING_VERSION.zip"
+    ;;
+esac
 
-if [[ "$DISTRIBUTION" == "developer-id" ]]; then
+if [[ "$DISTRIBUTION" == "developer-id" || "$DISTRIBUTION" == "notarized" ]]; then
   if [[ -z "${CODESIGN_IDENTITY:-}" ]]; then
-    echo "CODESIGN_IDENTITY is required for --distribution developer-id" >&2
+    echo "CODESIGN_IDENTITY is required for --distribution $DISTRIBUTION" >&2
     exit 2
   fi
 
   if [[ -z "${CLIPSIGHT_BUNDLE_ID:-}" ]]; then
-    echo "CLIPSIGHT_BUNDLE_ID is required for --distribution developer-id" >&2
+    echo "CLIPSIGHT_BUNDLE_ID is required for --distribution $DISTRIBUTION" >&2
+    exit 2
+  fi
+fi
+
+if [[ "$DISTRIBUTION" == "notarized" ]]; then
+  if [[ -z "${NOTARYTOOL_PROFILE:-}" ]]; then
+    echo "NOTARYTOOL_PROFILE is required for --distribution notarized" >&2
     exit 2
   fi
 fi
@@ -185,22 +206,20 @@ if command -v qlmanage >/dev/null 2>&1; then
   qlmanage -r cache >/dev/null 2>&1 || true
 fi
 
-if [[ "$DISTRIBUTION" == "developer-id" ]]; then
+if [[ "$DISTRIBUTION" == "local" || "$DISTRIBUTION" == "developer-id" ]]; then
   /usr/bin/ditto -c -k --keepParent "$APP_BUNDLE" "$ZIP_FILE"
+fi
 
-  if [[ -n "${NOTARYTOOL_PROFILE:-}" ]]; then
-    /usr/bin/xcrun notarytool submit "$ZIP_FILE" \
-      --keychain-profile "$NOTARYTOOL_PROFILE" \
-      --wait
-    /usr/bin/xcrun stapler staple "$APP_BUNDLE"
-    /usr/bin/xcrun stapler validate "$APP_BUNDLE"
-    rm -f "$ZIP_FILE"
-    /usr/bin/ditto -c -k --keepParent "$APP_BUNDLE" "$ZIP_FILE"
-  else
-    echo "NOTARYTOOL_PROFILE is not set; generated notarization-ready zip without submitting." >&2
-  fi
-
-  echo "$ZIP_FILE"
+if [[ "$DISTRIBUTION" == "notarized" ]]; then
+  /usr/bin/ditto -c -k --keepParent "$APP_BUNDLE" "$ZIP_FILE"
+  /usr/bin/xcrun notarytool submit "$ZIP_FILE" \
+    --keychain-profile "$NOTARYTOOL_PROFILE" \
+    --wait
+  /usr/bin/xcrun stapler staple "$APP_BUNDLE"
+  /usr/bin/xcrun stapler validate "$APP_BUNDLE"
+  rm -f "$ZIP_FILE"
+  /usr/bin/ditto -c -k --keepParent "$APP_BUNDLE" "$ZIP_FILE"
 fi
 
 echo "$APP_BUNDLE"
+echo "$ZIP_FILE"

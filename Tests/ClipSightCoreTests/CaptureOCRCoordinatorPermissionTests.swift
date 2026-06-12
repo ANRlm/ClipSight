@@ -39,6 +39,8 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
         XCTAssertFalse(screenCaptureService.didCapture)
         XCTAssertEqual(appState.lastMessage, "需要屏幕录制权限，已打开系统设置")
         XCTAssertEqual(hudPresenter.shownPresentations, [])
+        XCTAssertEqual(appState.lastCaptureSummary?.result, .permissionMissing)
+        XCTAssertEqual(appState.lastCaptureSummary?.errorCategory, "ScreenRecordingPermission")
         XCTAssertFalse(appState.isCapturing)
     }
 
@@ -77,6 +79,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
         XCTAssertTrue(screenCaptureService.didCapture)
         XCTAssertEqual(appState.lastMessage, "已取消截图")
         XCTAssertEqual(hudPresenter.shownPresentations, [])
+        XCTAssertEqual(appState.lastCaptureSummary?.result, .cancelled)
         XCTAssertFalse(appState.isCapturing)
     }
 
@@ -113,6 +116,8 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
 
         XCTAssertEqual(appState.lastMessage, "已复制 2 行文本")
         XCTAssertEqual(hudPresenter.shownPresentations, [.success])
+        XCTAssertEqual(appState.lastCaptureSummary?.result, .success)
+        XCTAssertEqual(appState.lastCaptureSummary?.recognizedLineCount, 2)
         XCTAssertFalse(appState.isCapturing)
     }
 
@@ -156,6 +161,8 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
 
         XCTAssertEqual(appState.lastMessage, "Copied 2 lines")
         XCTAssertEqual(hudPresenter.shownPresentations, [.success])
+        XCTAssertEqual(appState.lastCaptureSummary?.result, .success)
+        XCTAssertEqual(appState.lastCaptureSummary?.recognizedLineCount, 2)
         XCTAssertFalse(appState.isCapturing)
     }
 
@@ -192,6 +199,8 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
 
         XCTAssertEqual(appState.lastMessage, "OCR 识别失败：图像无法读取")
         XCTAssertEqual(hudPresenter.shownPresentations, [.failure])
+        XCTAssertEqual(appState.lastCaptureSummary?.result, .failure)
+        XCTAssertEqual(appState.lastCaptureSummary?.errorCategory, "OCRServiceError")
         XCTAssertFalse(appState.isCapturing)
     }
 
@@ -228,6 +237,8 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
 
         XCTAssertEqual(appState.lastMessage, "写入剪贴板失败")
         XCTAssertEqual(hudPresenter.shownPresentations, [.failure])
+        XCTAssertEqual(appState.lastCaptureSummary?.result, .failure)
+        XCTAssertEqual(appState.lastCaptureSummary?.errorCategory, "ClipboardServiceError")
         XCTAssertFalse(appState.isCapturing)
     }
 
@@ -264,6 +275,8 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
 
         XCTAssertEqual(appState.lastMessage, "截图文件无法读取")
         XCTAssertEqual(hudPresenter.shownPresentations, [.failure])
+        XCTAssertEqual(appState.lastCaptureSummary?.result, .failure)
+        XCTAssertEqual(appState.lastCaptureSummary?.errorCategory, "ScreenCaptureError")
         XCTAssertFalse(appState.isCapturing)
     }
 
@@ -300,6 +313,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
 
         XCTAssertEqual(appState.lastMessage, "未识别到文本")
         XCTAssertEqual(hudPresenter.shownPresentations, [.noText])
+        XCTAssertEqual(appState.lastCaptureSummary?.result, .noText)
         XCTAssertFalse(appState.isCapturing)
     }
 
