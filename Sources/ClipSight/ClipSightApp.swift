@@ -13,8 +13,12 @@ struct ClipSightApp: App {
     private let launchAtLoginService: LaunchAtLoginService
     private let coordinator: CaptureOCRCoordinator
     private let settingsWindowPresenter: SettingsWindowPresenter
+    private let statusHUDPresenter: StatusHUDPresenter
+    private let hudPlacementEditorPresenter: HUDPlacementEditorPresenter
     private let permissionGuidanceCoordinator: PermissionGuidanceCoordinator
     private let openSettingsWindowAction: @MainActor () -> Void
+    private let copyDiagnosticsAction: @MainActor () -> Void
+    private let isDevelopmentQAMenuEnabled: Bool
 
     init() {
         let state = AppState()
@@ -22,14 +26,21 @@ struct ClipSightApp: App {
         let launchAtLoginService = LaunchAtLoginService()
         let hotKeyManager = HotKeyManager()
         let settingsWindowPresenter = SettingsWindowPresenter()
+        let statusHUDPresenter = StatusHUDPresenter(placement: { state.hudPlacement })
+        let hudPlacementEditorPresenter = HUDPlacementEditorPresenter(
+            placement: { state.hudPlacement },
+            onPlacementChange: { placement in
+                state.setHUDPlacement(placement)
+            }
+        )
         let coordinator = CaptureOCRCoordinator(
             appState: state,
             permissionService: permissionService,
             screenCaptureService: ScreenCaptureService(),
             ocrService: OCRService(),
             clipboardService: ClipboardService(),
-            statusPresenter: StatusHUDPresenter(),
-            temporaryFileCleaner: TemporaryFileCleaner()
+            temporaryFileCleaner: TemporaryFileCleaner(),
+            statusHUDPresenter: statusHUDPresenter
         )
 
         func registerHotKey(_ hotKey: HotKey?) {
@@ -67,6 +78,16 @@ struct ClipSightApp: App {
             state.launchAtLoginEnabled = launchAtLoginService.isEnabled
         }
 
+        let copyDiagnostics: @MainActor () -> Void = {
+            let report = DiagnosticReportBuilder.makeReport(appState: state)
+            do {
+                _ = try ClipboardService().write(report)
+                state.lastMessage = "已复制诊断信息"
+            } catch {
+                state.lastMessage = error.localizedDescription
+            }
+        }
+
         let openSettingsWindow: @MainActor () -> Void = {
             settingsWindowPresenter.show {
                 SettingsView(
@@ -74,6 +95,8 @@ struct ClipSightApp: App {
                     onRecordHotKey: updateHotKey,
                     onClearHotKey: clearHotKey,
                     onSetLaunchAtLogin: setLaunchAtLogin,
+                    onEditHUDPlacement: hudPlacementEditorPresenter.show,
+                    onResetHUDPlacement: state.resetHUDPlacement,
                     onRefreshPermissions: refreshPermissions,
                     onOpenScreenRecordingSettings: permissionService.openScreenRecordingSettings,
                     onOpenAccessibilitySettings: permissionService.openAccessibilitySettings
@@ -93,9 +116,13 @@ struct ClipSightApp: App {
         self.launchAtLoginService = launchAtLoginService
         self.hotKeyManager = hotKeyManager
         self.settingsWindowPresenter = settingsWindowPresenter
+        self.statusHUDPresenter = statusHUDPresenter
+        self.hudPlacementEditorPresenter = hudPlacementEditorPresenter
         self.coordinator = coordinator
         self.permissionGuidanceCoordinator = permissionGuidanceCoordinator
         self.openSettingsWindowAction = openSettingsWindow
+        self.copyDiagnosticsAction = copyDiagnostics
+        self.isDevelopmentQAMenuEnabled = ProcessInfo.processInfo.environment["CLIPSIGHT_ENABLE_QA_MENU"] == "1"
 
         permissionGuidanceCoordinator.refreshState()
         permissionGuidanceCoordinator.startObservingApplicationActivation()
@@ -138,6 +165,42 @@ struct ClipSightApp: App {
                 openSettingsWindowAction()
             } label: {
                 Label("设置...", systemImage: "gearshape")
+            }
+
+            Button {
+                copyDiagnosticsAction()
+            } label: {
+                Label("复制诊断信息", systemImage: "doc.on.doc")
+            }
+
+            if isDevelopmentQAMenuEnabled {
+                Divider()
+
+                Menu("开发验证") {
+                    Button {
+                        statusHUDPresenter.show(.success)
+                    } label: {
+                        Label("显示成功 HUD", systemImage: "checkmark.circle")
+                    }
+
+                    Button {
+                        statusHUDPresenter.show(.noText)
+                    } label: {
+                        Label("显示无文本 HUD", systemImage: "exclamationmark.circle")
+                    }
+
+                    Button {
+                        statusHUDPresenter.show(.failure)
+                    } label: {
+                        Label("显示失败 HUD", systemImage: "xmark.circle")
+                    }
+
+                    Button {
+                        hudPlacementEditorPresenter.show()
+                    } label: {
+                        Label("调整 HUD 位置", systemImage: "cursorarrow.motionlines")
+                    }
+                }
             }
 
             Button {

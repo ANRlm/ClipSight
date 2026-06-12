@@ -1,12 +1,11 @@
 import AppKit
 import Foundation
-import Testing
+import XCTest
 @testable import ClipSightCore
 
 @MainActor
-struct PermissionGuidanceCoordinatorTests {
-    @Test
-    func opensSettingsWindowOnceWhenFirstLaunchIsMissingScreenRecordingPermission() {
+final class PermissionGuidanceCoordinatorTests: XCTestCase {
+    func testOpensSettingsWindowOnceWhenFirstLaunchIsMissingScreenRecordingPermission() {
         let appState = AppState()
         let permissionService = MutablePermissionService(screenRecordingGranted: false)
         let launchAtLoginService = StubLaunchAtLoginManaging(isEnabled: false)
@@ -23,14 +22,13 @@ struct PermissionGuidanceCoordinatorTests {
 
         coordinator.handleLaunch()
 
-        #expect(settingsOpenCount == 1)
-        #expect(!permissionService.didOpenScreenRecordingSettings)
-        #expect(store.hasShownInitialScreenRecordingGuidance)
-        #expect(!appState.screenRecordingPermission.isGranted)
+        XCTAssertEqual(settingsOpenCount, 1)
+        XCTAssertFalse(permissionService.didOpenScreenRecordingSettings)
+        XCTAssertTrue(store.hasShownInitialScreenRecordingGuidance)
+        XCTAssertFalse(appState.screenRecordingPermission.isGranted)
     }
 
-    @Test
-    func doesNotRepeatFirstLaunchPromptAfterItHasAlreadyBeenShown() {
+    func testDoesNotRepeatFirstLaunchPromptAfterItHasAlreadyBeenShown() {
         let appState = AppState()
         let permissionService = MutablePermissionService(screenRecordingGranted: false)
         let launchAtLoginService = StubLaunchAtLoginManaging(isEnabled: false)
@@ -48,12 +46,11 @@ struct PermissionGuidanceCoordinatorTests {
 
         coordinator.handleLaunch()
 
-        #expect(settingsOpenCount == 0)
-        #expect(!permissionService.didOpenScreenRecordingSettings)
+        XCTAssertEqual(settingsOpenCount, 0)
+        XCTAssertFalse(permissionService.didOpenScreenRecordingSettings)
     }
 
-    @Test
-    func refreshesPermissionAndLaunchStatusWhenApplicationBecomesActive() async throws {
+    func testRefreshesPermissionAndLaunchStatusWhenApplicationBecomesActive() async throws {
         let appState = AppState()
         let permissionService = MutablePermissionService(screenRecordingGranted: false)
         let launchAtLoginService = StubLaunchAtLoginManaging(isEnabled: false)
@@ -73,8 +70,8 @@ struct PermissionGuidanceCoordinatorTests {
         notificationCenter.post(name: NSApplication.didBecomeActiveNotification, object: nil)
         try await Task.sleep(nanoseconds: 20_000_000)
 
-        #expect(appState.screenRecordingPermission.isGranted)
-        #expect(appState.launchAtLoginEnabled)
+        XCTAssertTrue(appState.screenRecordingPermission.isGranted)
+        XCTAssertTrue(appState.launchAtLoginEnabled)
     }
 }
 

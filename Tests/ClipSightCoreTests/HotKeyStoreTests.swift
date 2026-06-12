@@ -1,10 +1,9 @@
 import Foundation
-import Testing
+import XCTest
 @testable import ClipSightCore
 
-struct HotKeyStoreTests {
-    @Test
-    func saveLoadAndClearHotKey() throws {
+final class HotKeyStoreTests: XCTestCase {
+    func testSaveLoadAndClearHotKey() throws {
         let suiteName = "ClipSight.HotKeyStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defer {
@@ -20,15 +19,14 @@ struct HotKeyStoreTests {
 
         store.save(hotKey)
 
-        #expect(store.load() == hotKey)
+        XCTAssertEqual(store.load(), hotKey)
 
         store.clear()
 
-        #expect(store.load() == nil)
+        XCTAssertNil(store.load())
     }
 
-    @Test
-    func displayStringUsesModifierOrderAndKeyEquivalent() {
+    func testDisplayStringUsesModifierOrderAndKeyEquivalent() {
         let hotKey = HotKey(
             keyCode: 9,
             carbonModifiers: HotKeyModifier.control.carbonFlag
@@ -37,6 +35,6 @@ struct HotKeyStoreTests {
             keyEquivalent: "V"
         )
 
-        #expect(hotKey.displayString == "⌃⌥⌘V")
+        XCTAssertEqual(hotKey.displayString, "⌃⌥⌘V")
     }
 }

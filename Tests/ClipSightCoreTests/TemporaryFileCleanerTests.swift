@@ -1,20 +1,18 @@
 import Foundation
-import Testing
+import XCTest
 @testable import ClipSightCore
 
-struct TemporaryFileCleanerTests {
-    @Test
-    func createTemporaryScreenshotURLUsesPNGExtension() {
+final class TemporaryFileCleanerTests: XCTestCase {
+    func testCreateTemporaryScreenshotURLUsesPNGExtension() {
         let cleaner = TemporaryFileCleaner(fileManager: .default)
 
         let url = cleaner.createTemporaryScreenshotURL()
 
-        #expect(url.pathExtension == "png")
-        #expect(url.lastPathComponent.hasPrefix("ClipSight-"))
+        XCTAssertEqual(url.pathExtension, "png")
+        XCTAssertTrue(url.lastPathComponent.hasPrefix("ClipSight-"))
     }
 
-    @Test
-    func removeDeletesExistingFile() throws {
+    func testRemoveDeletesExistingFile() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("ClipSightCleanerTests-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -28,11 +26,10 @@ struct TemporaryFileCleanerTests {
         let cleaner = TemporaryFileCleaner(fileManager: .default)
         try cleaner.remove(fileURL)
 
-        #expect(!FileManager.default.fileExists(atPath: fileURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
     }
 
-    @Test
-    func removeIgnoresMissingFile() throws {
+    func testRemoveIgnoresMissingFile() throws {
         let missingURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("ClipSight-missing-\(UUID().uuidString).png")
         let cleaner = TemporaryFileCleaner(fileManager: .default)

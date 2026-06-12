@@ -1,9 +1,8 @@
-import Testing
+import XCTest
 @testable import ClipSightCore
 
-struct PermissionStatusTests {
-    @Test
-    func optionalPermissionDoesNotRequireActionWhenMissing() {
+final class PermissionStatusTests: XCTestCase {
+    func testOptionalPermissionDoesNotRequireActionWhenMissing() {
         let status = PermissionStatus(
             title: "辅助功能",
             missingLabel: "可选",
@@ -12,19 +11,18 @@ struct PermissionStatusTests {
             isRequired: false
         )
 
-        #expect(status.statusLabel == "可选")
-        #expect(!status.requiresAction)
+        XCTAssertEqual(status.statusLabel, "可选")
+        XCTAssertFalse(status.requiresAction)
     }
 
-    @Test
-    func requiredPermissionRequiresActionWhenMissing() {
+    func testRequiredPermissionRequiresActionWhenMissing() {
         let status = PermissionStatus(
             title: "屏幕录制",
             detail: "允许读取截图",
             isGranted: false
         )
 
-        #expect(status.statusLabel == "需要授权")
-        #expect(status.requiresAction)
+        XCTAssertEqual(status.statusLabel, "需要授权")
+        XCTAssertTrue(status.requiresAction)
     }
 }

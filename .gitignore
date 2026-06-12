@@ -1,4 +1,12 @@
 .DS_Store
 .build/
+.swiftpm/
+DerivedData/
+*.xcuserdata/
+*.xcuserstate
+*.dSYM/
 dist/
 .codex/
+.env
+.env.*
+docs/superpowers/

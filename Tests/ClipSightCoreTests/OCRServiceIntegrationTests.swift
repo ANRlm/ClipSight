@@ -1,14 +1,16 @@
 import AppKit
 import Foundation
-import Testing
+import XCTest
 @testable import ClipSightCore
 
-private let shouldRunOCRIntegrationTests = ProcessInfo.processInfo.environment["CLIPSIGHT_RUN_OCR_INTEGRATION"] == "1"
-
 @MainActor
-struct OCRServiceIntegrationTests {
-    @Test(.enabled(if: shouldRunOCRIntegrationTests))
-    func recognizesGeneratedChineseAndEnglishImage() async throws {
+final class OCRServiceIntegrationTests: XCTestCase {
+    func testRecognizesGeneratedChineseAndEnglishImage() async throws {
+        try XCTSkipUnless(
+            ProcessInfo.processInfo.environment["CLIPSIGHT_RUN_OCR_INTEGRATION"] == "1",
+            "Set CLIPSIGHT_RUN_OCR_INTEGRATION=1 to run Vision OCR integration tests."
+        )
+
         let imageURL = try makeOCRFixtureImage()
         defer {
             try? FileManager.default.removeItem(at: imageURL)
@@ -16,9 +18,9 @@ struct OCRServiceIntegrationTests {
 
         let text = try await OCRService().recognizeText(in: imageURL)
 
-        #expect(text.localizedCaseInsensitiveContains("CLIPSIGHT"))
-        #expect(text.contains("中文"))
-        #expect(text.contains("识别"))
+        XCTAssertTrue(text.localizedCaseInsensitiveContains("CLIPSIGHT"))
+        XCTAssertTrue(text.contains("中文"))
+        XCTAssertTrue(text.contains("识别"))
     }
 
     private func makeOCRFixtureImage() throws -> URL {

@@ -22,14 +22,15 @@ public protocol ClipboardWriting: AnyObject {
 }
 
 @MainActor
-public protocol StatusHUDPresenting: AnyObject {
-    func show(_ presentation: StatusHUDPresentation)
-}
-
-@MainActor
 public protocol LaunchAtLoginManaging: AnyObject {
     var isEnabled: Bool { get }
     func setEnabled(_ enabled: Bool) throws
+}
+
+@MainActor
+public protocol StatusHUDPresenting: AnyObject {
+    func show(_ presentation: StatusHUDPresentation)
+    func hide()
 }
 
 public protocol TemporaryFileCleaning {

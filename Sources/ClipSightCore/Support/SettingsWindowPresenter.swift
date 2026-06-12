@@ -13,7 +13,7 @@ public final class SettingsWindowPresenter {
 
     public init(
         title: String = "ClipSight 设置",
-        size: NSSize = NSSize(width: 560, height: 560)
+        size: NSSize = NSSize(width: 660, height: 620)
     ) {
         self.title = title
         self.size = size
@@ -35,11 +35,15 @@ public final class SettingsWindowPresenter {
         let contentRect = NSRect(origin: .zero, size: size)
         let window = NSWindow(
             contentRect: contentRect,
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.title = title
+        window.minSize = NSSize(
+            width: min(size.width, 560),
+            height: min(size.height, 420)
+        )
         window.isReleasedWhenClosed = false
         window.center()
         self.window = window

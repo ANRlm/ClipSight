@@ -2,6 +2,7 @@
 set -euo pipefail
 
 CONFIGURATION="release"
+DISTRIBUTION="local"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -9,12 +10,34 @@ while [[ $# -gt 0 ]]; do
       CONFIGURATION="${2:-}"
       shift 2
       ;;
+    --distribution)
+      DISTRIBUTION="${2:-}"
+      shift 2
+      ;;
+    --distribution=*)
+      DISTRIBUTION="${1#--distribution=}"
+      shift
+      ;;
     debug|release)
       CONFIGURATION="$1"
       shift
       ;;
     -h|--help)
-      echo "usage: $0 [--configuration debug|release]" >&2
+      cat >&2 <<'USAGE'
+usage: script/package_app.sh [--configuration debug|release] [--distribution local|developer-id]
+
+Distributions:
+  local         Build dist/ClipSight.app with ad-hoc signing. This is the default.
+  developer-id Build, sign with Developer ID, create a notarization-ready zip,
+                and notarize/staple when NOTARYTOOL_PROFILE is set.
+
+Developer ID environment:
+  CODESIGN_IDENTITY     Required. Developer ID Application signing identity.
+  CLIPSIGHT_BUNDLE_ID   Required. Release bundle identifier.
+  MARKETING_VERSION     Optional, defaults to 0.1.0.
+  BUILD_NUMBER          Optional, defaults to 1.
+  NOTARYTOOL_PROFILE    Optional. Keychain profile for xcrun notarytool.
+USAGE
       exit 0
       ;;
     *)
@@ -29,8 +52,15 @@ if [[ "$CONFIGURATION" != "debug" && "$CONFIGURATION" != "release" ]]; then
   exit 2
 fi
 
+if [[ "$DISTRIBUTION" != "local" && "$DISTRIBUTION" != "developer-id" ]]; then
+  echo "distribution must be local or developer-id" >&2
+  exit 2
+fi
+
 APP_NAME="ClipSight"
-BUNDLE_ID="com.local.ClipSight"
+BUNDLE_ID="${CLIPSIGHT_BUNDLE_ID:-com.local.ClipSight}"
+MARKETING_VERSION="${MARKETING_VERSION:-0.1.0}"
+BUILD_NUMBER="${BUILD_NUMBER:-1}"
 MIN_SYSTEM_VERSION="13.0"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
@@ -42,6 +72,19 @@ APP_BINARY="$APP_MACOS/$APP_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 ICONSET_DIR="$DIST_DIR/AppIcon.iconset"
 ICON_FILE="$APP_RESOURCES/AppIcon.icns"
+ZIP_FILE="$DIST_DIR/$APP_NAME-$MARKETING_VERSION-$BUILD_NUMBER.zip"
+
+if [[ "$DISTRIBUTION" == "developer-id" ]]; then
+  if [[ -z "${CODESIGN_IDENTITY:-}" ]]; then
+    echo "CODESIGN_IDENTITY is required for --distribution developer-id" >&2
+    exit 2
+  fi
+
+  if [[ -z "${CLIPSIGHT_BUNDLE_ID:-}" ]]; then
+    echo "CLIPSIGHT_BUNDLE_ID is required for --distribution developer-id" >&2
+    exit 2
+  fi
+fi
 
 if [[ -z "${SWIFT_BIN:-}" ]]; then
   XCODE_SWIFT="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift"
@@ -61,6 +104,7 @@ BUILD_DIR="$("$SWIFT_BIN" build -c "$CONFIGURATION" --show-bin-path)"
 BUILD_BINARY="$BUILD_DIR/$APP_NAME"
 
 rm -rf "$APP_BUNDLE"
+rm -f "$ZIP_FILE"
 mkdir -p "$APP_MACOS" "$APP_RESOURCES"
 cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
@@ -91,9 +135,9 @@ cat >"$INFO_PLIST" <<PLIST
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.1.0</string>
+  <string>$MARKETING_VERSION</string>
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>$BUILD_NUMBER</string>
   <key>LSMinimumSystemVersion</key>
   <string>$MIN_SYSTEM_VERSION</string>
   <key>LSUIElement</key>
@@ -107,8 +151,7 @@ cat >"$INFO_PLIST" <<PLIST
 PLIST
 
 if command -v codesign >/dev/null 2>&1; then
-  CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
-  if [[ "$CODESIGN_IDENTITY" == "-" ]]; then
+  if [[ "$DISTRIBUTION" == "local" ]]; then
     codesign \
       --force \
       --deep \
@@ -116,8 +159,19 @@ if command -v codesign >/dev/null 2>&1; then
       --requirements "=designated => identifier \"$BUNDLE_ID\"" \
       "$APP_BUNDLE" >/dev/null
   else
-    codesign --force --deep --sign "$CODESIGN_IDENTITY" "$APP_BUNDLE" >/dev/null
+    codesign \
+      --force \
+      --deep \
+      --options runtime \
+      --timestamp \
+      --sign "$CODESIGN_IDENTITY" \
+      "$APP_BUNDLE" >/dev/null
   fi
+
+  codesign --verify --deep --strict "$APP_BUNDLE"
+else
+  echo "codesign is required to package ClipSight.app" >&2
+  exit 2
 fi
 
 touch "$APP_BUNDLE"
@@ -129,6 +183,24 @@ fi
 
 if command -v qlmanage >/dev/null 2>&1; then
   qlmanage -r cache >/dev/null 2>&1 || true
+fi
+
+if [[ "$DISTRIBUTION" == "developer-id" ]]; then
+  /usr/bin/ditto -c -k --keepParent "$APP_BUNDLE" "$ZIP_FILE"
+
+  if [[ -n "${NOTARYTOOL_PROFILE:-}" ]]; then
+    /usr/bin/xcrun notarytool submit "$ZIP_FILE" \
+      --keychain-profile "$NOTARYTOOL_PROFILE" \
+      --wait
+    /usr/bin/xcrun stapler staple "$APP_BUNDLE"
+    /usr/bin/xcrun stapler validate "$APP_BUNDLE"
+    rm -f "$ZIP_FILE"
+    /usr/bin/ditto -c -k --keepParent "$APP_BUNDLE" "$ZIP_FILE"
+  else
+    echo "NOTARYTOOL_PROFILE is not set; generated notarization-ready zip without submitting." >&2
+  fi
+
+  echo "$ZIP_FILE"
 fi
 
 echo "$APP_BUNDLE"
