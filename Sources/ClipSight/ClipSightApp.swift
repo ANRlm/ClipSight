@@ -16,9 +16,7 @@ struct ClipSightApp: App {
     private let statusHUDPresenter: StatusHUDPresenter
     private let hudPlacementEditorPresenter: HUDPlacementEditorPresenter
     private let permissionGuidanceCoordinator: PermissionGuidanceCoordinator
-    private let openSettingsWindowAction: @MainActor () -> Void
-    private let copyDiagnosticsAction: @MainActor () -> Void
-    private let isDevelopmentQAMenuEnabled: Bool
+    private let statusMenuController: StatusMenuController
 
     init() {
         let state = AppState()
@@ -109,6 +107,30 @@ struct ClipSightApp: App {
             }
         }
 
+        let isDevelopmentQAMenuEnabled = ProcessInfo.processInfo.environment["CLIPSIGHT_ENABLE_QA_MENU"] == "1"
+        let statusMenuController = StatusMenuController(
+            appState: state,
+            actions: StatusMenuActions(
+                captureOCR: coordinator.startCapture,
+                openSettings: openSettingsWindow,
+                copyDiagnostics: copyDiagnostics,
+                quit: {
+                    NSApplication.shared.terminate(nil)
+                },
+                showSuccessHUD: {
+                    statusHUDPresenter.show(.success)
+                },
+                showNoTextHUD: {
+                    statusHUDPresenter.show(.noText)
+                },
+                showFailureHUD: {
+                    statusHUDPresenter.show(.failure)
+                },
+                adjustHUDPosition: hudPlacementEditorPresenter.show
+            ),
+            isDevelopmentQAMenuEnabled: isDevelopmentQAMenuEnabled
+        )
+
         let permissionGuidanceCoordinator = PermissionGuidanceCoordinator(
             appState: state,
             permissionService: permissionService,
@@ -125,9 +147,7 @@ struct ClipSightApp: App {
         self.hudPlacementEditorPresenter = hudPlacementEditorPresenter
         self.coordinator = coordinator
         self.permissionGuidanceCoordinator = permissionGuidanceCoordinator
-        self.openSettingsWindowAction = openSettingsWindow
-        self.copyDiagnosticsAction = copyDiagnostics
-        self.isDevelopmentQAMenuEnabled = ProcessInfo.processInfo.environment["CLIPSIGHT_ENABLE_QA_MENU"] == "1"
+        self.statusMenuController = statusMenuController
 
         permissionGuidanceCoordinator.refreshState()
         permissionGuidanceCoordinator.startObservingApplicationActivation()
@@ -144,78 +164,8 @@ struct ClipSightApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("ClipSight", systemImage: "text.viewfinder") {
-            Button {
-                coordinator.startCapture()
-            } label: {
-                Label(
-                    appState.isCapturing ? appState.strings.capturingActionTitle : appState.strings.captureActionTitle,
-                    systemImage: "viewfinder"
-                )
-            }
-            .disabled(appState.isCapturing)
-
-            Divider()
-
-            Text("\(appState.strings.shortcutMenuPrefix): \(appState.shortcutDisplay)")
-
-            if let hotKeyRegistrationError = appState.hotKeyRegistrationError {
-                Text(hotKeyRegistrationError)
-            }
-
-            if !appState.lastMessage.isEmpty {
-                Text(appState.lastMessage)
-            }
-
-            Divider()
-
-            Button {
-                openSettingsWindowAction()
-            } label: {
-                Label(appState.strings.settingsActionTitle, systemImage: "gearshape")
-            }
-
-            Button {
-                copyDiagnosticsAction()
-            } label: {
-                Label(appState.strings.copyDiagnosticsActionTitle, systemImage: "doc.on.doc")
-            }
-
-            if isDevelopmentQAMenuEnabled {
-                Divider()
-
-                Menu(appState.strings.developmentValidationTitle) {
-                    Button {
-                        statusHUDPresenter.show(.success)
-                    } label: {
-                        Label(appState.strings.showSuccessHUDTitle, systemImage: "checkmark.circle")
-                    }
-
-                    Button {
-                        statusHUDPresenter.show(.noText)
-                    } label: {
-                        Label(appState.strings.showNoTextHUDTitle, systemImage: "exclamationmark.circle")
-                    }
-
-                    Button {
-                        statusHUDPresenter.show(.failure)
-                    } label: {
-                        Label(appState.strings.showFailureHUDTitle, systemImage: "xmark.circle")
-                    }
-
-                    Button {
-                        hudPlacementEditorPresenter.show()
-                    } label: {
-                        Label(appState.strings.adjustHUDPositionTitle, systemImage: "cursorarrow.motionlines")
-                    }
-                }
-            }
-
-            Button {
-                NSApplication.shared.terminate(nil)
-            } label: {
-                Label(appState.strings.quitActionTitle, systemImage: "power")
-            }
+        Settings {
+            EmptyView()
         }
     }
 }
