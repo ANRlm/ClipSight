@@ -6,6 +6,7 @@ public struct SettingsView: View {
     private let onRecordHotKey: (HotKey) -> Void
     private let onClearHotKey: () -> Void
     private let onSetLaunchAtLogin: (Bool) -> Void
+    private let onSetLanguageSelection: (AppLanguageSelection) -> Void
     private let onEditHUDPlacement: () -> Void
     private let onResetHUDPlacement: () -> Void
     private let onRefreshPermissions: () -> Void
@@ -17,6 +18,7 @@ public struct SettingsView: View {
         onRecordHotKey: @escaping (HotKey) -> Void,
         onClearHotKey: @escaping () -> Void,
         onSetLaunchAtLogin: @escaping (Bool) -> Void,
+        onSetLanguageSelection: @escaping (AppLanguageSelection) -> Void,
         onEditHUDPlacement: @escaping () -> Void,
         onResetHUDPlacement: @escaping () -> Void,
         onRefreshPermissions: @escaping () -> Void,
@@ -27,6 +29,7 @@ public struct SettingsView: View {
         self.onRecordHotKey = onRecordHotKey
         self.onClearHotKey = onClearHotKey
         self.onSetLaunchAtLogin = onSetLaunchAtLogin
+        self.onSetLanguageSelection = onSetLanguageSelection
         self.onEditHUDPlacement = onEditHUDPlacement
         self.onResetHUDPlacement = onResetHUDPlacement
         self.onRefreshPermissions = onRefreshPermissions
@@ -45,18 +48,22 @@ public struct SettingsView: View {
         .frame(minWidth: 640, alignment: .topLeading)
         .frame(minHeight: 492, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
+        .background(WindowTitleUpdater(title: appState.strings.settingsWindowTitle))
         .onAppear {
             onRefreshPermissions()
         }
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let strings = appState.strings
+
+        return VStack(alignment: .leading, spacing: 14) {
             header
 
-            SettingsGroup(title: "快捷键", subtitle: "全局触发框选 OCR", systemImage: "keyboard") {
+            SettingsGroup(title: strings.shortcutSectionTitle, subtitle: strings.shortcutSectionSubtitle, systemImage: "keyboard") {
                 ShortcutRecorderView(
                     currentHotKey: appState.hotKey,
+                    strings: strings,
                     onRecord: onRecordHotKey,
                     onClear: onClearHotKey
                 )
@@ -70,11 +77,11 @@ public struct SettingsView: View {
                 }
             }
 
-            SettingsGroup(title: "权限", subtitle: "屏幕录制为必需，辅助功能为可选", systemImage: "lock.shield") {
+            SettingsGroup(title: strings.permissionsSectionTitle, subtitle: strings.permissionsSectionSubtitle, systemImage: "lock.shield") {
                 PermissionRow(
                     status: appState.screenRecordingPermission,
-                    roleLabel: "必需",
-                    actionTitle: "打开",
+                    roleLabel: strings.requiredRoleLabel,
+                    actionTitle: strings.openButtonTitle,
                     action: onOpenScreenRecordingSettings
                 )
 
@@ -82,8 +89,8 @@ public struct SettingsView: View {
 
                 PermissionRow(
                     status: appState.accessibilityPermission,
-                    roleLabel: "可选",
-                    actionTitle: "打开",
+                    roleLabel: strings.optionalRoleLabel,
+                    actionTitle: strings.openButtonTitle,
                     action: onOpenAccessibilitySettings
                 )
 
@@ -92,7 +99,7 @@ public struct SettingsView: View {
                 HStack {
                     InlineNotice(
                         systemImage: "arrow.triangle.2.circlepath",
-                        text: "从系统设置返回后会自动刷新，也可手动刷新。",
+                        text: strings.refreshPermissionsNotice,
                         color: .secondary
                     )
 
@@ -101,17 +108,17 @@ public struct SettingsView: View {
                     Button {
                         onRefreshPermissions()
                     } label: {
-                        Label("刷新", systemImage: "arrow.clockwise")
+                        Label(strings.refreshButtonTitle, systemImage: "arrow.clockwise")
                     }
                     .controlSize(.small)
                 }
             }
 
-            SettingsGroup(title: "系统", subtitle: "启动行为，本地识别不上传截图内容", systemImage: "gearshape") {
+            SettingsGroup(title: strings.systemSectionTitle, subtitle: strings.systemSectionSubtitle, systemImage: "gearshape") {
                 SettingsInfoRow(
                     systemImage: "power",
-                    title: "开机启动",
-                    detail: "登录 macOS 后自动启动 ClipSight"
+                    title: strings.launchAtLoginTitle,
+                    detail: strings.launchAtLoginDetail
                 ) {
                     Toggle(
                         isOn: Binding(
@@ -129,13 +136,38 @@ public struct SettingsView: View {
                 SectionDivider()
 
                 SettingsInfoRow(
+                    systemImage: "globe",
+                    title: strings.languageTitle,
+                    detail: strings.languageDetail
+                ) {
+                    Picker(
+                        strings.languageTitle,
+                        selection: Binding(
+                            get: { appState.languageSelection },
+                            set: onSetLanguageSelection
+                        )
+                    ) {
+                        ForEach(AppLanguageSelection.allCases) { selection in
+                            Text(strings.languageSelectionTitle(selection))
+                                .tag(selection)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                    .frame(width: 126)
+                }
+
+                SectionDivider()
+
+                SettingsInfoRow(
                     systemImage: "rectangle.and.hand.point.up.left",
-                    title: "提示框位置",
-                    detail: "拖动设置 OCR 结果提示的显示位置"
+                    title: strings.hudPositionTitle,
+                    detail: strings.hudPositionDetail
                 ) {
                     HStack(spacing: 8) {
                         StatusBadge(
-                            text: appState.hudPlacement.summaryLabel,
+                            text: appState.hudPlacement.summaryLabel(in: strings),
                             systemImage: "scope",
                             color: .accentColor
                         )
@@ -143,14 +175,14 @@ public struct SettingsView: View {
                         Button {
                             onEditHUDPlacement()
                         } label: {
-                            Label("调整", systemImage: "cursorarrow.motionlines")
+                            Label(strings.adjustButtonTitle, systemImage: "cursorarrow.motionlines")
                         }
                         .controlSize(.small)
 
                         Button {
                             onResetHUDPlacement()
                         } label: {
-                            Label("重置", systemImage: "arrow.counterclockwise")
+                            Label(strings.resetButtonTitle, systemImage: "arrow.counterclockwise")
                         }
                         .controlSize(.small)
                     }
@@ -161,7 +193,9 @@ public struct SettingsView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 14) {
+        let strings = appState.strings
+
+        return HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(.thinMaterial)
@@ -180,14 +214,14 @@ public struct SettingsView: View {
                 Text("ClipSight")
                     .font(.system(size: 21, weight: .semibold))
 
-                Text("框选截图，识别中英文文本，并复制到剪贴板")
+                Text(strings.settingsHeaderDetail)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 16)
 
-            StatusBadge(text: "本地处理", systemImage: "checkmark.shield", color: .green)
+            StatusBadge(text: strings.localProcessingBadge, systemImage: "checkmark.shield", color: .green)
         }
         .padding(.bottom, 4)
     }
@@ -380,5 +414,25 @@ private struct SectionDivider: View {
         Rectangle()
             .fill(Color(nsColor: .separatorColor).opacity(0.45))
             .frame(height: 1)
+    }
+}
+
+private struct WindowTitleUpdater: NSViewRepresentable {
+    let title: String
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        updateTitle(for: view)
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        updateTitle(for: nsView)
+    }
+
+    private func updateTitle(for view: NSView) {
+        DispatchQueue.main.async {
+            view.window?.title = title
+        }
     }
 }

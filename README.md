@@ -5,7 +5,11 @@
 <h1 align="center">ClipSight</h1>
 
 <p align="center">
-  Native macOS menu bar OCR powered by Apple Vision.
+  原生 macOS 菜单栏 OCR 工具，基于 Apple Vision 在本机识别文本。
+</p>
+
+<p align="center">
+  [中文](README.md) | [English](README.en.md)
 </p>
 
 <p align="center">
@@ -14,119 +18,125 @@
   <img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-supported-orange.svg">
 </p>
 
-ClipSight is a lightweight macOS menu bar app for local OCR. Trigger it from the menu bar or a custom global shortcut, select a screen region with the system screenshot picker, and ClipSight recognizes Chinese and English text locally before copying it to the clipboard.
+ClipSight 是一个轻量的 macOS 菜单栏 OCR 应用。你可以从菜单栏或自定义全局快捷键触发系统截图框选，ClipSight 会在本机识别中文和英文文本，并自动复制到剪贴板。
 
-ClipSight does not upload screenshots, call network OCR services, keep OCR history, or show recognized text in its result HUD.
+ClipSight 不上传截图、不调用网络 OCR、不保存识别历史，也不会在结果提示框中展示 OCR 原文。
 
-## Features
+## 功能特性
 
-- Native menu bar app with a compact macOS-style result HUD.
-- Local Chinese and English OCR via Apple Vision.
-- System screenshot selection flow, with no custom capture overlay.
-- Automatic clipboard copy after successful recognition.
-- Configurable global shortcut.
-- Settings window for shortcut, permissions, launch at login, and HUD placement.
-- Lightweight diagnostics that omit OCR text and screenshot paths.
+- 原生菜单栏应用，提供紧凑的 macOS 风格 OCR 结果提示框。
+- 使用 Apple Vision 在本机识别中文和英文。
+- 使用 macOS 系统截图框选流程，不实现自定义截图遮罩。
+- 识别成功后自动复制到系统剪贴板。
+- 支持自定义全局快捷键。
+- 设置页支持快捷键、权限、开机启动、界面语言和提示框位置。
+- 诊断信息不会包含 OCR 原文或截图路径。
 
-## Screenshots
+## 截图
 
 <p align="center">
-  <img src="docs/assets/settings-screenshot-placeholder.svg" alt="ClipSight settings screenshot placeholder">
+  <img src="docs/assets/settings-screenshot-placeholder.svg" alt="ClipSight 设置页截图占位">
 </p>
 
-## Requirements
+## 系统要求
 
-- macOS 13 Ventura or later
-- Xcode or Xcode Command Line Tools
+- macOS 13 Ventura 或更高版本
+- Xcode 或 Xcode Command Line Tools
 - Swift Package Manager
 
-## Installation
+## 安装
 
-The 0.1 release includes a local ad-hoc signed app zip for early testing. Because it is not Developer ID signed and notarized, macOS Gatekeeper may block it.
+0.2 版本提供一个用于早期测试的本地 ad-hoc 签名 app zip。因为它没有使用 Developer ID 签名和公证，macOS Gatekeeper 可能会拦截。
 
-For the smoothest local install:
+本地测试安装：
 
-1. Download `ClipSight-0.1.0-local.zip` from the release page.
-2. Unzip it and move `ClipSight.app` to `/Applications`.
-3. Open it from Finder. If macOS blocks the app, use System Settings > Privacy & Security to allow the local build.
-4. Grant Screen Recording permission when prompted.
+1. 从 release 页面下载 `ClipSight-0.2.0-local.zip`。
+2. 解压后将 `ClipSight.app` 移动到 `/Applications`。
+3. 从 Finder 打开应用。如果 macOS 阻止启动，请在系统设置的“隐私与安全性”中允许该本地构建。
+4. 按提示授予屏幕录制权限。
 
-For official redistribution, build with Developer ID signing and notarization instead of the local package.
+如果要正式分发，请使用 Developer ID 签名和公证构建，不要分发 local 包。
 
-## Usage
+## 使用
 
-1. Launch `ClipSight.app`.
-2. Open the ClipSight menu bar item.
-3. Choose `截图识别` and select a region with the macOS screenshot UI.
-4. When OCR finishes, ClipSight copies recognized text to the system clipboard and shows a result-only HUD.
+1. 启动 `ClipSight.app`。
+2. 点击菜单栏中的 ClipSight 图标。
+3. 选择 `截图识别`，使用 macOS 系统截图界面框选区域。
+4. OCR 完成后，ClipSight 会把识别文本复制到剪贴板，并显示只包含结果状态的提示框。
 
-ClipSight has no default global shortcut. Open `设置...` and record your preferred shortcut.
+ClipSight 没有默认全局快捷键。请打开 `设置...` 录制你自己的快捷键。
 
-## Permissions
+## 权限
 
-ClipSight needs Screen Recording permission so the app can read the screenshot selected by the macOS system capture UI.
+ClipSight 需要屏幕录制权限，以便读取 macOS 系统截图框选得到的图片内容。
 
-Accessibility permission is optional. The current global shortcut implementation uses Carbon hot key registration and does not require Accessibility permission.
+辅助功能权限是可选项。当前全局快捷键使用 Carbon hot key 注册，不依赖辅助功能权限。
 
-## Development
+## 语言
 
-Build the package:
+应用默认同步系统语言，系统首选语言为中文时显示中文，否则显示英文。你也可以在设置页中手动选择 `中文` 或 `English`，切换会立即生效。
+
+OCR 识别语言始终同时包含简体中文和英文，不会因为界面语言切换而缩窄识别范围。
+
+## 开发
+
+构建项目：
 
 ```bash
 swift build
 ```
 
-Run the app locally:
+本地运行应用：
 
 ```bash
 ./script/build_and_run.sh
 ```
 
-Enable the hidden QA menu for HUD and placement checks:
+启用隐藏 QA 菜单，用于验证 HUD 和提示框位置：
 
 ```bash
 CLIPSIGHT_ENABLE_QA_MENU=1 ./script/build_and_run.sh
 ```
 
-Run tests:
+运行测试：
 
 ```bash
 ./script/test.sh
 ```
 
-The Vision OCR integration test is opt-in because it depends on the local Apple Vision runtime:
+Vision OCR 集成测试默认不运行，因为它依赖本机 Apple Vision 运行环境：
 
 ```bash
 CLIPSIGHT_RUN_OCR_INTEGRATION=1 ./script/test.sh --filter OCRServiceIntegrationTests
 ```
 
-## Packaging
+## 打包
 
-Create a local ad-hoc signed app bundle:
+创建本地 ad-hoc 签名 app bundle：
 
 ```bash
 ./script/package_app.sh --distribution local
 ```
 
-Verify the local bundle:
+验证本地包：
 
 ```bash
 script/verify_release.sh --mode local
 ```
 
-`local` mode validates bundle structure and code signing. Gatekeeper rejection is allowed for this ad-hoc build mode.
+`local` 模式会验证 bundle 结构和代码签名。Gatekeeper 拒绝 local ad-hoc 构建是允许结果。
 
-Create a Developer ID build:
+创建 Developer ID 构建：
 
 ```bash
 CODESIGN_IDENTITY="Developer ID Application: Your Name" \
 CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
-MARKETING_VERSION="0.1.0" \
+MARKETING_VERSION="0.2.0" \
 BUILD_NUMBER="1" \
 ./script/package_app.sh --distribution developer-id
 ```
 
-Submit for notarization when a notarytool keychain profile is available:
+如果已经配置 notarytool keychain profile，可以提交公证：
 
 ```bash
 NOTARYTOOL_PROFILE="clipsight-notary" \
@@ -135,20 +145,20 @@ CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
 ./script/package_app.sh --distribution developer-id
 ```
 
-Release checklist: [docs/release-checklist.md](docs/release-checklist.md)
+发布检查清单：[docs/release-checklist.md](docs/release-checklist.md)
 
-## Privacy
+## 隐私
 
-OCR runs on device with Apple Vision. ClipSight does not upload screenshots, does not store OCR history, and does not include OCR text or screenshot paths in diagnostics.
+OCR 使用 Apple Vision 在本机执行。ClipSight 不上传截图，不保存 OCR 历史，诊断信息也不会包含 OCR 原文或截图路径。
 
-## Troubleshooting
+## 故障排查
 
-- Missing permission: grant Screen Recording permission in System Settings, then relaunch or return to ClipSight.
-- Shortcut does not fire: confirm the shortcut is recorded and not already reserved by macOS or another app.
-- No text recognized: try a higher contrast or larger text region. Very small, skewed, or complex multi-column content may fail.
-- Local build blocked: local ad-hoc builds can be rejected by Gatekeeper. Developer ID signing and notarization are required for normal distribution.
-- Stale permissions after rebuilding: toggle Screen Recording permission off and on for `ClipSight.app`.
+- 缺少权限：在系统设置中授予屏幕录制权限，然后重新启动或切回 ClipSight。
+- 快捷键无响应：确认快捷键已经录制，并且没有被 macOS 或其他应用占用。
+- 未识别到文本：尝试选择对比度更高、字号更大的区域。过小、倾斜或复杂多列内容可能无法识别。
+- 本地构建被拦截：local ad-hoc 构建可能被 Gatekeeper 拒绝。正式分发需要 Developer ID 签名和公证。
+- 重新构建后权限失效：在系统设置中关闭再重新开启 `ClipSight.app` 的屏幕录制权限。
 
 ## License
 
-ClipSight is available under the [MIT License](LICENSE).
+ClipSight 使用 [MIT License](LICENSE) 发布。

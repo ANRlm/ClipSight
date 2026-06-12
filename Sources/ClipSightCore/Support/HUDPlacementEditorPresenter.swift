@@ -10,14 +10,17 @@ public final class HUDPlacementEditorPresenter {
 
     private let placementProvider: @MainActor () -> HUDPlacement
     private let onPlacementChange: @MainActor (HUDPlacement) -> Void
+    private let stringsProvider: @MainActor () -> AppStrings
     private var window: NSPanel?
 
     public init(
         placement: @escaping @MainActor () -> HUDPlacement,
-        onPlacementChange: @escaping @MainActor (HUDPlacement) -> Void
+        onPlacementChange: @escaping @MainActor (HUDPlacement) -> Void,
+        strings: @escaping @MainActor () -> AppStrings = { AppStrings(language: .chinese) }
     ) {
         self.placementProvider = placement
         self.onPlacementChange = onPlacementChange
+        self.stringsProvider = strings
     }
 
     public func show() {
@@ -44,6 +47,7 @@ public final class HUDPlacementEditorPresenter {
                 snapThreshold: Self.snapThreshold,
                 backdropOpacity: Self.backdropOpacity,
                 previewSurface: Self.previewSurface,
+                strings: stringsProvider(),
                 onPlacementChange: { [weak self] placement in
                     self?.onPlacementChange(placement)
                 },
@@ -107,6 +111,7 @@ private struct HUDPlacementEditorView: View {
     let snapThreshold: CGFloat
     let backdropOpacity: Double
     let previewSurface: StatusHUDCapsuleSurface
+    let strings: AppStrings
     let onPlacementChange: (HUDPlacement) -> Void
     let onFinish: () -> Void
 
@@ -115,6 +120,7 @@ private struct HUDPlacementEditorView: View {
         snapThreshold: CGFloat,
         backdropOpacity: Double,
         previewSurface: StatusHUDCapsuleSurface,
+        strings: AppStrings,
         onPlacementChange: @escaping (HUDPlacement) -> Void,
         onFinish: @escaping () -> Void
     ) {
@@ -122,6 +128,7 @@ private struct HUDPlacementEditorView: View {
         self.snapThreshold = snapThreshold
         self.backdropOpacity = backdropOpacity
         self.previewSurface = previewSurface
+        self.strings = strings
         self.onPlacementChange = onPlacementChange
         self.onFinish = onFinish
     }
@@ -135,7 +142,7 @@ private struct HUDPlacementEditorView: View {
 
                 centerLine(in: proxy.size)
 
-                StatusHUDCapsuleView(presentation: .success, surface: previewSurface)
+                StatusHUDCapsuleView(presentation: .success, surface: previewSurface, strings: strings)
                     .position(point(for: draft.finishedPlacement, in: proxy.size))
                     .gesture(
                         DragGesture(minimumDistance: 0, coordinateSpace: .named("hud-placement-editor"))
@@ -154,7 +161,7 @@ private struct HUDPlacementEditorView: View {
                         Button {
                             onFinish()
                         } label: {
-                            Label("取消", systemImage: "xmark")
+                            Label(strings.placementCancelTitle, systemImage: "xmark")
                         }
                         .controlSize(.large)
 
@@ -162,7 +169,7 @@ private struct HUDPlacementEditorView: View {
                             onPlacementChange(draft.finishedPlacement)
                             onFinish()
                         } label: {
-                            Label("完成", systemImage: "checkmark")
+                            Label(strings.placementDoneTitle, systemImage: "checkmark")
                         }
                         .controlSize(.large)
                         .buttonStyle(.borderedProminent)

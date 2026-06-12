@@ -6,12 +6,7 @@ public enum HotKeyManagerError: LocalizedError, Equatable {
     case registrationFailed(OSStatus)
 
     public var errorDescription: String? {
-        switch self {
-        case .eventHandlerInstallFailed(let status):
-            "快捷键监听初始化失败（\(status)）"
-        case .registrationFailed(let status):
-            "快捷键注册失败（\(status)），可能已被其他应用占用"
-        }
+        AppStrings(language: .chinese).hotKeyErrorMessage(self)
     }
 }
 

@@ -53,7 +53,7 @@ public final class CaptureOCRCoordinator {
     }
 
     private func performCapture() async {
-        appState.lastMessage = "正在截图识别"
+        appState.lastMessage = appState.strings.ocrCapturingMessage
         statusHUDPresenter?.hide()
         logger.info("Capture OCR started")
 
@@ -74,7 +74,7 @@ public final class CaptureOCRCoordinator {
         guard permissions.screenRecording.isGranted else {
             permissionService.openScreenRecordingSettings()
             logger.info("Screen recording permission missing; opened System Settings")
-            finishWithMessage("需要屏幕录制权限，已打开系统设置")
+            finishWithMessage(appState.strings.permissionMissingOpenedSettingsMessage)
             return
         }
 
@@ -83,22 +83,22 @@ public final class CaptureOCRCoordinator {
 
             guard case .captured(let imageURL) = captureResult else {
                 logger.info("Capture OCR cancelled by user")
-                appState.lastMessage = "已取消截图"
+                appState.lastMessage = appState.strings.captureCancelledMessage
                 return
             }
 
             let text = try await ocrService.recognizeText(in: imageURL)
             let lineCount = try clipboardService.write(text)
-            let message = "已复制 \(lineCount) 行文本"
+            let message = appState.strings.copiedLinesMessage(lineCount)
             statusHUDPresenter?.show(.success)
             logger.info("Capture OCR succeeded with \(lineCount, privacy: .public) recognized lines copied")
             finishWithMessage(message)
         } catch OCRServiceError.noTextRecognized {
             statusHUDPresenter?.show(.noText)
             logger.info("Capture OCR completed with no recognized text")
-            finishWithMessage("未识别到文本")
+            finishWithMessage(appState.strings.noTextRecognizedMessage)
         } catch {
-            let message = error.localizedDescription
+            let message = appState.strings.errorMessage(for: error)
             statusHUDPresenter?.show(.failure)
             logger.error("Capture OCR failed: \(message, privacy: .public)")
             finishWithMessage(message)
