@@ -46,16 +46,16 @@ ClipSight does not upload screenshots, call network OCR services, keep OCR histo
 
 ## Installation
 
-The 0.3 release includes a local ad-hoc signed app zip for early testing. Because it is not Developer ID signed and notarized, macOS Gatekeeper may block it.
+Starting with the 0.4 release, official builds are Developer ID signed and notarized by Apple. Local ad-hoc builds remain available for development and early testing, but they are not recommended for regular distribution.
 
 For the smoothest local install:
 
-1. Download `ClipSight-0.3.0-local.zip` from the release page.
+1. Download `ClipSight-0.4.0.zip` from the release page.
 2. Unzip it and move `ClipSight.app` to `/Applications`.
-3. Open it from Finder. If macOS blocks the app, use System Settings > Privacy & Security to allow the local build.
+3. Open it from Finder.
 4. Grant Screen Recording permission when prompted.
 
-For official redistribution, build with Developer ID signing and notarization instead of the local package.
+If you download `ClipSight-0.4.0-local.zip`, that is a local ad-hoc signed build and macOS Gatekeeper may block it. For regular distribution, use the notarized zip without the `local` suffix.
 
 ## Usage
 
@@ -126,23 +126,31 @@ script/verify_release.sh --mode local
 
 `local` mode validates bundle structure and code signing. Gatekeeper rejection is allowed for this ad-hoc build mode.
 
-Create a Developer ID build:
+Create a Developer ID build for manual notarization:
 
 ```bash
 CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
-MARKETING_VERSION="0.3.0" \
+CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
+MARKETING_VERSION="0.4.0" \
 BUILD_NUMBER="1" \
 ./script/package_app.sh --distribution developer-id
 ```
 
-Submit for notarization when a notarytool keychain profile is available:
+Create a notarized release build when a notarytool keychain profile is available:
 
 ```bash
 NOTARYTOOL_PROFILE="clipsight-notary" \
 CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
-./script/package_app.sh --distribution developer-id
+CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
+MARKETING_VERSION="0.4.0" \
+BUILD_NUMBER="1" \
+./script/package_app.sh --distribution notarized
+```
+
+Guarded local release script:
+
+```bash
+script/release.sh --version 0.4.0 --distribution notarized --push
 ```
 
 Release checklist: [docs/release-checklist.md](docs/release-checklist.md)

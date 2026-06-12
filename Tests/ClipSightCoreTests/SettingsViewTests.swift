@@ -54,6 +54,18 @@ final class SettingsViewTests: XCTestCase {
         appState.setLanguageSelection(.chinese)
         XCTAssertEqual(appState.strings.languageTitle, "语言")
     }
+
+    func testSettingsViewIncludesAccessibilityLabelsAndPermissionGuidance() throws {
+        let source = try String(contentsOfFile: "Sources/ClipSightCore/Views/SettingsView.swift", encoding: .utf8)
+        let stringsSource = try String(contentsOfFile: "Sources/ClipSightCore/Models/AppLanguage.swift", encoding: .utf8)
+
+        XCTAssertTrue(source.contains(".accessibilityLabel"))
+        XCTAssertTrue(source.contains(".accessibilityHint"))
+        XCTAssertTrue(source.contains(".help"))
+        XCTAssertTrue(source.contains("screenRecordingMissingGuidance"))
+        XCTAssertTrue(stringsSource.contains("授权后返回 ClipSight 并刷新"))
+        XCTAssertTrue(stringsSource.contains("After granting permission, return to ClipSight and refresh"))
+    }
 }
 
 private func temporaryDefaults() -> UserDefaults {

@@ -10,6 +10,7 @@ public final class AppState: ObservableObject {
     @Published public var isCapturing: Bool
     @Published public var lastMessage: String
     @Published public var hotKeyRegistrationError: String?
+    @Published public var lastCaptureSummary: LastCaptureSummary?
     @Published public private(set) var hudPlacement: HUDPlacement
     @Published public private(set) var languageSelection: AppLanguageSelection
 
@@ -39,6 +40,7 @@ public final class AppState: ObservableObject {
         self.isCapturing = false
         self.lastMessage = initialStrings.readyStatus
         self.hotKeyRegistrationError = nil
+        self.lastCaptureSummary = nil
     }
 
     public var language: AppLanguage {

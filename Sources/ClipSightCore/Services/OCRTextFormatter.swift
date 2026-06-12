@@ -2,8 +2,6 @@ import CoreGraphics
 import Foundation
 
 public enum OCRTextFormatter {
-    private static let rowTolerance: CGFloat = 0.04
-
     public static func formattedText(from lines: [OCRTextLine]) -> String {
         let cleanedLines = lines
             .map { line in
@@ -21,6 +19,7 @@ public enum OCRTextFormatter {
     }
 
     private static func groupedRows(from lines: [OCRTextLine]) -> [TextRow] {
+        let rowTolerance = rowTolerance(for: lines)
         let sortedByTop = lines.sorted { lhs, rhs in
             if lhs.boundingBox.maxY == rhs.boundingBox.maxY {
                 return lhs.boundingBox.minX < rhs.boundingBox.minX
@@ -41,6 +40,19 @@ public enum OCRTextFormatter {
         return rows.sorted { lhs, rhs in
             lhs.anchorTop > rhs.anchorTop
         }
+    }
+
+    private static func rowTolerance(for lines: [OCRTextLine]) -> CGFloat {
+        let heights = lines
+            .map { max($0.boundingBox.height, 0.01) }
+            .sorted()
+
+        guard !heights.isEmpty else {
+            return 0.04
+        }
+
+        let medianHeight = heights[heights.count / 2]
+        return min(0.08, max(0.018, medianHeight * 0.9))
     }
 
     private static func isBeforeWithinRow(_ lhs: OCRTextLine, _ rhs: OCRTextLine) -> Bool {

@@ -99,6 +99,21 @@ public struct AppStrings: Equatable, Sendable {
         choose("从系统设置返回后会自动刷新，也可手动刷新。", "Permissions refresh automatically after returning from System Settings. You can also refresh manually.")
     }
     public var refreshButtonTitle: String { choose("刷新", "Refresh") }
+    public var screenRecordingMissingGuidance: String {
+        choose(
+            "授权后返回 ClipSight 并刷新；如果仍未生效，请重启 ClipSight。",
+            "After granting permission, return to ClipSight and refresh. If it still does not apply, restart ClipSight."
+        )
+    }
+    public var openScreenRecordingSettingsHint: String {
+        choose("打开系统设置中的屏幕录制权限页面", "Open Screen Recording permission in System Settings")
+    }
+    public var openAccessibilitySettingsHint: String {
+        choose("打开系统设置中的辅助功能权限页面", "Open Accessibility permission in System Settings")
+    }
+    public var refreshPermissionsHint: String {
+        choose("重新检查屏幕录制和辅助功能权限状态", "Recheck Screen Recording and Accessibility permission status")
+    }
 
     public var systemSectionTitle: String { choose("系统", "System") }
     public var systemSectionSubtitle: String {
@@ -116,6 +131,18 @@ public struct AppStrings: Equatable, Sendable {
     }
     public var adjustButtonTitle: String { choose("调整", "Adjust") }
     public var resetButtonTitle: String { choose("重置", "Reset") }
+    public var launchAtLoginHint: String {
+        choose("切换登录 macOS 后是否自动启动 ClipSight", "Toggle whether ClipSight starts automatically after logging in to macOS")
+    }
+    public var languagePickerHint: String {
+        choose("选择同步系统、中文或英文界面", "Choose System, Chinese, or English interface language")
+    }
+    public var adjustHUDPlacementHint: String {
+        choose("打开提示框位置调整界面", "Open HUD placement adjustment")
+    }
+    public var resetHUDPlacementHint: String {
+        choose("将 OCR 结果提示框位置恢复默认", "Reset the OCR result HUD position to the default")
+    }
 
     public var shortcutRecordTitle: String { choose("录制", "Record") }
     public var shortcutRecordingTitle: String { choose("录制中", "Recording") }

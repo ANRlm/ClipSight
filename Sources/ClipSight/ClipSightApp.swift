@@ -1,5 +1,6 @@
 import AppKit
 import ClipSightCore
+import OSLog
 import SwiftUI
 
 @main
@@ -171,8 +172,11 @@ struct ClipSightApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private let logger = Logger(subsystem: ClipSightLogging.subsystem, category: ClipSightLogging.Category.appLifecycle)
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.prohibited)
+        logger.info("ClipSight launched with prohibited activation policy")
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

@@ -46,16 +46,16 @@ ClipSight 不上传截图、不调用网络 OCR、不保存识别历史，也不
 
 ## 安装
 
-0.3 版本提供一个用于早期测试的本地 ad-hoc 签名 app zip。因为它没有使用 Developer ID 签名和公证，macOS Gatekeeper 可能会拦截。
+0.4 版本开始，正式发布包使用 Developer ID 签名并经过 Apple 公证。本地 ad-hoc 包仍可用于开发和早期测试，但不建议作为普通用户分发包。
 
 本地测试安装：
 
-1. 从 release 页面下载 `ClipSight-0.3.0-local.zip`。
+1. 从 release 页面下载 `ClipSight-0.4.0.zip`。
 2. 解压后将 `ClipSight.app` 移动到 `/Applications`。
-3. 从 Finder 打开应用。如果 macOS 阻止启动，请在系统设置的“隐私与安全性”中允许该本地构建。
+3. 从 Finder 打开应用。
 4. 按提示授予屏幕录制权限。
 
-如果要正式分发，请使用 Developer ID 签名和公证构建，不要分发 local 包。
+如果下载的是 `ClipSight-0.4.0-local.zip`，这是本地 ad-hoc 签名构建，macOS Gatekeeper 可能会拦截。正式分发请使用不带 `local` 后缀的公证包。
 
 ## 使用
 
@@ -126,23 +126,31 @@ script/verify_release.sh --mode local
 
 `local` 模式会验证 bundle 结构和代码签名。Gatekeeper 拒绝 local ad-hoc 构建是允许结果。
 
-创建 Developer ID 构建：
+创建 Developer ID 待公证构建：
 
 ```bash
 CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
-MARKETING_VERSION="0.3.0" \
+CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
+MARKETING_VERSION="0.4.0" \
 BUILD_NUMBER="1" \
 ./script/package_app.sh --distribution developer-id
 ```
 
-如果已经配置 notarytool keychain profile，可以提交公证：
+如果已经配置 notarytool keychain profile，可以创建正式公证构建：
 
 ```bash
 NOTARYTOOL_PROFILE="clipsight-notary" \
 CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
-./script/package_app.sh --distribution developer-id
+CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
+MARKETING_VERSION="0.4.0" \
+BUILD_NUMBER="1" \
+./script/package_app.sh --distribution notarized
+```
+
+受控发布脚本：
+
+```bash
+script/release.sh --version 0.4.0 --distribution notarized --push
 ```
 
 发布检查清单：[docs/release-checklist.md](docs/release-checklist.md)

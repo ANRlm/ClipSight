@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import OSLog
 
 @MainActor
 public final class PermissionGuidanceCoordinator {
@@ -9,6 +10,7 @@ public final class PermissionGuidanceCoordinator {
     private let promptStore: InitialPermissionPromptStore
     private let notificationCenter: NotificationCenter
     private let openSettingsWindow: @MainActor () -> Void
+    private let logger = Logger(subsystem: ClipSightLogging.subsystem, category: ClipSightLogging.Category.permissions)
     private var activationObserver: NSObjectProtocol?
 
     public init(
@@ -36,6 +38,7 @@ public final class PermissionGuidanceCoordinator {
         }
 
         promptStore.markInitialScreenRecordingGuidanceShown()
+        logger.info("Opening initial permission guidance because screen recording is missing")
         openSettingsWindow()
     }
 
@@ -62,5 +65,6 @@ public final class PermissionGuidanceCoordinator {
     public func refreshState() {
         appState.applyPermissionSnapshot(permissionService.currentSnapshot())
         appState.launchAtLoginEnabled = launchAtLoginService.isEnabled
+        logger.info("Permission state refreshed screenRecording=\(self.appState.screenRecordingPermission.isGranted, privacy: .public) accessibility=\(self.appState.accessibilityPermission.isGranted, privacy: .public)")
     }
 }

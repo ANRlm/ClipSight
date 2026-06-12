@@ -1,5 +1,6 @@
 import Carbon
 import Foundation
+import OSLog
 
 public enum HotKeyManagerError: LocalizedError, Equatable {
     case eventHandlerInstallFailed(OSStatus)
@@ -11,6 +12,7 @@ public enum HotKeyManagerError: LocalizedError, Equatable {
 }
 
 public final class HotKeyManager {
+    private let logger = Logger(subsystem: ClipSightLogging.subsystem, category: ClipSightLogging.Category.hotKey)
     private let signature: OSType = 0x43534F48
     private let hotKeyIdentifier: UInt32 = 1
     private var hotKeyRef: EventHotKeyRef?
@@ -34,6 +36,7 @@ public final class HotKeyManager {
         unregister()
 
         guard let hotKey, hotKey.isUsable else {
+            logger.info("Hot key registration skipped because no usable shortcut is configured")
             return
         }
 
@@ -51,16 +54,19 @@ public final class HotKeyManager {
         )
 
         guard status == noErr else {
+            logger.error("Hot key registration failed status=\(status, privacy: .public)")
             throw HotKeyManagerError.registrationFailed(status)
         }
 
         hotKeyRef = newHotKeyRef
+        logger.info("Hot key registered keyCode=\(hotKey.keyCode, privacy: .public)")
     }
 
     public func unregister() {
         if let hotKeyRef {
             UnregisterEventHotKey(hotKeyRef)
             self.hotKeyRef = nil
+            logger.info("Hot key unregistered")
         }
     }
 
@@ -113,8 +119,11 @@ public final class HotKeyManager {
         )
 
         guard status == noErr else {
+            logger.error("Hot key event handler installation failed status=\(status, privacy: .public)")
             throw HotKeyManagerError.eventHandlerInstallFailed(status)
         }
+
+        logger.info("Hot key event handler installed")
     }
 }
 

@@ -10,7 +10,10 @@ final class ReadmeLocalizationTests: XCTestCase {
         XCTAssertTrue(readme.contains("原生 macOS 菜单栏 OCR 工具"))
         XCTAssertTrue(readme.contains("## 功能特性"))
         XCTAssertTrue(readme.contains("docs/assets/settings-screenshot-zh.png"))
+        XCTAssertTrue(readme.contains("ClipSight-0.4.0.zip"))
+        XCTAssertTrue(readme.contains("公证包"))
         XCTAssertFalse(readme.contains("settings-screenshot-placeholder.svg"))
+        XCTAssertFalse(readme.contains("ClipSight-0.3.0-local.zip"))
     }
 
     func testEnglishReadmeLinksBackToChineseReadme() throws {
@@ -21,6 +24,9 @@ final class ReadmeLocalizationTests: XCTestCase {
         XCTAssertTrue(readme.contains("Native macOS menu bar OCR"))
         XCTAssertTrue(readme.contains("## Features"))
         XCTAssertTrue(readme.contains("docs/assets/settings-screenshot-en.png"))
+        XCTAssertTrue(readme.contains("ClipSight-0.4.0.zip"))
+        XCTAssertTrue(readme.contains("notarized zip"))
         XCTAssertFalse(readme.contains("settings-screenshot-placeholder.svg"))
+        XCTAssertFalse(readme.contains("ClipSight-0.3.0-local.zip"))
     }
 }

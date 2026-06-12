@@ -8,7 +8,8 @@ public enum DiagnosticReportBuilder {
             appState: appState,
             appVersion: bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown",
             buildNumber: bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown",
-            bundleIdentifier: bundle.bundleIdentifier ?? "unknown"
+            bundleIdentifier: bundle.bundleIdentifier ?? "unknown",
+            operatingSystemVersion: ProcessInfo.processInfo.operatingSystemVersionString
         )
     }
 
@@ -17,15 +18,18 @@ public enum DiagnosticReportBuilder {
         appState: AppState,
         appVersion: String,
         buildNumber: String,
-        bundleIdentifier: String
+        bundleIdentifier: String,
+        operatingSystemVersion: String = ProcessInfo.processInfo.operatingSystemVersionString
     ) -> String {
         let hudPlacement = appState.hudPlacement
         let hotKeyErrorState = appState.hotKeyRegistrationError == nil ? "none" : "present"
+        let lastCapture = appState.lastCaptureSummary?.diagnosticLabel ?? "none"
 
         return [
             "ClipSight Diagnostics",
             "Bundle ID: \(bundleIdentifier)",
             "Version: \(appVersion) (\(buildNumber))",
+            "macOS: \(operatingSystemVersion)",
             "Screen Recording: \(permissionLabel(appState.screenRecordingPermission))",
             "Accessibility: \(permissionLabel(appState.accessibilityPermission))",
             "Launch At Login: \(appState.launchAtLoginEnabled ? "enabled" : "disabled")",
@@ -33,6 +37,7 @@ public enum DiagnosticReportBuilder {
             "Shortcut: \(appState.shortcutDisplay)",
             "Hot Key Error: \(hotKeyErrorState)",
             "HUD Placement: x=\(format(hudPlacement.x)) y=\(format(hudPlacement.y))",
+            "Last Capture: \(lastCapture)",
             "OCR Text: omitted",
             "Screenshot Paths: omitted"
         ].joined(separator: "\n")

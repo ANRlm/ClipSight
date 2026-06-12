@@ -1,4 +1,5 @@
 import AppKit
+import OSLog
 import QuartzCore
 import SwiftUI
 
@@ -14,6 +15,7 @@ public final class StatusHUDPresenter: StatusHUDPresenting {
     }
 
     private let displayDuration: TimeInterval
+    private let logger = Logger(subsystem: ClipSightLogging.subsystem, category: ClipSightLogging.Category.hud)
     private let placementProvider: @MainActor () -> HUDPlacement
     private let stringsProvider: @MainActor () -> AppStrings
     private var window: NSPanel?
@@ -48,6 +50,7 @@ public final class StatusHUDPresenter: StatusHUDPresenting {
         window.setFrame(NSRect(origin: startOrigin, size: Self.windowSize), display: true)
         window.alphaValue = 0
         window.orderFrontRegardless()
+        logger.info("Status HUD shown presentation=\(String(describing: presentation), privacy: .public)")
 
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.18
@@ -77,6 +80,7 @@ public final class StatusHUDPresenter: StatusHUDPresenting {
         }
 
         let finalOrigin = NSPoint(x: window.frame.origin.x, y: window.frame.origin.y - 6)
+        logger.info("Status HUD hidden")
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.14
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)

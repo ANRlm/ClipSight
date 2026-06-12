@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Build, Test, and Verify Local Bundle
+    runs-on: macos-14
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build package
+        run: swift build
+
+      - name: Run tests
+        run: ./script/test.sh
+
+      - name: Package local app
+        run: MARKETING_VERSION=0.0.0-ci BUILD_NUMBER="$GITHUB_RUN_NUMBER" ./script/package_app.sh --distribution local
+
+      - name: Verify local app
+        run: script/verify_release.sh --mode local
+
+      - name: Check whitespace
+        run: git diff --check
