@@ -61,6 +61,12 @@ cd "$ROOT_DIR"
 set +e
 TEST_OUTPUT="$("$SWIFT_BIN" test --enable-xctest --disable-swift-testing "${XCTest_FLAGS[@]}" "$@" 2>&1)"
 TEST_STATUS=$?
+if [[ $TEST_STATUS -ne 0 &&
+      ( "$TEST_OUTPUT" == *"Unknown option '--enable-xctest'"* ||
+        "$TEST_OUTPUT" == *"Unknown option '--disable-swift-testing'"* ) ]]; then
+  TEST_OUTPUT="$("$SWIFT_BIN" test "${XCTest_FLAGS[@]}" "$@" 2>&1)"
+  TEST_STATUS=$?
+fi
 set -e
 
 if [[ $TEST_STATUS -eq 0 ]]; then

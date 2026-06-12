@@ -23,12 +23,14 @@ final class ReleaseInfrastructureTests: XCTestCase {
         XCTAssertTrue(source.contains("./script/package_app.sh --distribution local"))
         XCTAssertTrue(source.contains("script/verify_release.sh --mode local"))
         XCTAssertTrue(source.contains("git diff --check"))
+        XCTAssertTrue(source.contains("actions/checkout@v5"))
     }
 
     func testReleaseWorkflowUsesManualNotarizedReleaseInputsAndSecrets() throws {
         let source = try String(contentsOfFile: ".github/workflows/release.yml", encoding: .utf8)
 
         XCTAssertTrue(source.contains("workflow_dispatch"))
+        XCTAssertTrue(source.contains("actions/checkout@v5"))
         XCTAssertTrue(source.contains("CLIPSIGHT_BUNDLE_ID: com.anrlm.ClipSight"))
         XCTAssertTrue(source.contains("CLIPSIGHT_DEVELOPER_ID_CERT_BASE64"))
         XCTAssertTrue(source.contains("CLIPSIGHT_DEVELOPER_ID_CERT_PASSWORD"))
@@ -59,5 +61,13 @@ final class ReleaseInfrastructureTests: XCTestCase {
         XCTAssertTrue(verifyScript.contains("CLIPSIGHT_EXPECTED_BUNDLE_ID:-com.anrlm.ClipSight"))
         XCTAssertTrue(verifyScript.contains("unexpected release bundle identifier"))
         XCTAssertTrue(verifyScript.contains("Skipped Gatekeeper acceptance for developer-id build"))
+    }
+
+    func testTestScriptFallsBackWhenSwiftPMDoesNotSupportXCTestFeatureFlags() throws {
+        let source = try String(contentsOfFile: "script/test.sh", encoding: .utf8)
+
+        XCTAssertTrue(source.contains("Unknown option '--enable-xctest'"))
+        XCTAssertTrue(source.contains("Unknown option '--disable-swift-testing'"))
+        XCTAssertTrue(source.contains(#""$SWIFT_BIN" test "${XCTest_FLAGS[@]}" "$@""#))
     }
 }
