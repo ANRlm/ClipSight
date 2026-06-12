@@ -5,7 +5,7 @@ import XCTest
 @MainActor
 final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     func testOpensScreenRecordingSettingsWhenScreenRecordingPermissionIsMissing() async {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -45,7 +45,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     }
 
     func testContinuesCaptureWhenOnlyAccessibilityPermissionIsMissing() async {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -84,7 +84,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     }
 
     func testUpdatesMessageWhenTextIsCopied() async {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -167,7 +167,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     }
 
     func testUpdatesMessageWithUnderlyingErrorReasonWhenOCRFails() async {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -205,7 +205,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     }
 
     func testShowsFailureHUDWhenClipboardWriteFails() async {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -243,7 +243,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     }
 
     func testShowsFailureHUDWhenCaptureCommandFails() async {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -281,7 +281,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     }
 
     func testShowsNoTextHUDWhenOCRFindsNoText() async {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -318,7 +318,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     }
 
     func testDoesNotShowRecognitionHUDDuringScreenSelection() async {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -352,7 +352,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     }
 
     func testCaptureOnceDoesNotStartWhenAlreadyCapturing() async {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         appState.isCapturing = true
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
@@ -389,7 +389,7 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
     }
 
     func testStartCaptureIgnoresRepeatedTriggersWhileCaptureIsRunning() async throws {
-        let appState = AppState()
+        let appState = makeChineseAppState()
         let permissionService = StubPermissionService(
             snapshot: PermissionSnapshot(
                 screenRecording: PermissionStatus(
@@ -424,6 +424,19 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
         XCTAssertEqual(screenCaptureService.captureCount, 1)
         XCTAssertFalse(appState.isCapturing)
     }
+}
+
+@MainActor
+private func makeChineseAppState() -> AppState {
+    let defaults = temporaryDefaults()
+    let appState = AppState(
+        hotKeyStore: HotKeyStore(userDefaults: defaults),
+        hudPlacementStore: HUDPlacementStore(userDefaults: defaults),
+        languageStore: AppLanguageStore(userDefaults: defaults),
+        preferredLanguages: { ["en-US"] }
+    )
+    appState.setLanguageSelection(.chinese)
+    return appState
 }
 
 @MainActor

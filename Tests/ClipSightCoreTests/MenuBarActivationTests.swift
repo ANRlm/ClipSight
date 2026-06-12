@@ -18,8 +18,18 @@ final class MenuBarActivationTests: XCTestCase {
         XCTAssertFalse(source.contains("func applicationDidFinishLaunching(_ notification: Notification) {\n        NSApp.setActivationPolicy(.accessory)"))
     }
 
+    func testOpenSettingsActionIsDeferredWithMainActorTask() throws {
+        let source = try String(contentsOfFile: "Sources/ClipSightCore/Support/StatusMenuController.swift", encoding: .utf8)
+
+        XCTAssertTrue(source.contains("@objc private func handleOpenSettings(_ sender: NSMenuItem)"))
+        XCTAssertTrue(source.contains("Task { @MainActor [actions] in"))
+        XCTAssertTrue(source.contains("actions.openSettings()"))
+    }
+
     @MainActor
-    func testStatusMenuRebuildsLocalizedItemsAndDisablesCaptureWhileCapturing() {
+    func testStatusMenuRebuildsLocalizedItemsAndDisablesCaptureWhileCapturing() throws {
+        try skipIfRunningInCI()
+
         let appState = makeAppState(languageSelection: .english)
         appState.isCapturing = true
 
@@ -50,6 +60,8 @@ final class MenuBarActivationTests: XCTestCase {
 
     @MainActor
     func testStatusMenuActionsInvokeConfiguredHandlers() throws {
+        try skipIfRunningInCI()
+
         let appState = makeAppState(languageSelection: .english)
         var didCapture = false
         var didOpenSettings = false
@@ -84,6 +96,8 @@ final class MenuBarActivationTests: XCTestCase {
 
     @MainActor
     func testOpenSettingsActionIsDeferredUntilStatusMenuCloses() throws {
+        try skipIfRunningInCI()
+
         let appState = makeAppState(languageSelection: .english)
         var didOpenSettings = false
 
@@ -108,6 +122,13 @@ final class MenuBarActivationTests: XCTestCase {
         RunLoop.main.run(until: Date().addingTimeInterval(0.05))
 
         XCTAssertTrue(didOpenSettings)
+    }
+
+    private func skipIfRunningInCI() throws {
+        try XCTSkipIf(
+            ProcessInfo.processInfo.environment["CI"] == "true",
+            "Runtime status item tests require a local WindowServer; CI keeps source-level coverage."
+        )
     }
 
     @MainActor
