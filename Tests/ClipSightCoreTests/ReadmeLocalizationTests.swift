@@ -9,6 +9,8 @@ final class ReadmeLocalizationTests: XCTestCase {
         XCTAssertFalse(readme.contains("[中文](README.md) | [English](README.en.md)"))
         XCTAssertTrue(readme.contains("原生 macOS 菜单栏 OCR 工具"))
         XCTAssertTrue(readme.contains("## 功能特性"))
+        XCTAssertTrue(readme.contains("docs/assets/settings-screenshot-zh.png"))
+        XCTAssertFalse(readme.contains("settings-screenshot-placeholder.svg"))
     }
 
     func testEnglishReadmeLinksBackToChineseReadme() throws {
@@ -18,5 +20,7 @@ final class ReadmeLocalizationTests: XCTestCase {
         XCTAssertFalse(readme.contains("[中文](README.md) | [English](README.en.md)"))
         XCTAssertTrue(readme.contains("Native macOS menu bar OCR"))
         XCTAssertTrue(readme.contains("## Features"))
+        XCTAssertTrue(readme.contains("docs/assets/settings-screenshot-en.png"))
+        XCTAssertFalse(readme.contains("settings-screenshot-placeholder.svg"))
     }
 }

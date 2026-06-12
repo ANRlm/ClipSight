@@ -35,7 +35,7 @@ ClipSight does not upload screenshots, call network OCR services, keep OCR histo
 ## Screenshots
 
 <p align="center">
-  <img src="docs/assets/settings-screenshot-placeholder.svg" alt="ClipSight settings screenshot placeholder">
+  <img src="docs/assets/settings-screenshot-en.png" alt="ClipSight settings screenshot">
 </p>
 
 ## Requirements
@@ -46,11 +46,11 @@ ClipSight does not upload screenshots, call network OCR services, keep OCR histo
 
 ## Installation
 
-The 0.2 release includes a local ad-hoc signed app zip for early testing. Because it is not Developer ID signed and notarized, macOS Gatekeeper may block it.
+The 0.3 release includes a local ad-hoc signed app zip for early testing. Because it is not Developer ID signed and notarized, macOS Gatekeeper may block it.
 
 For the smoothest local install:
 
-1. Download `ClipSight-0.2.0-local.zip` from the release page.
+1. Download `ClipSight-0.3.0-local.zip` from the release page.
 2. Unzip it and move `ClipSight.app` to `/Applications`.
 3. Open it from Finder. If macOS blocks the app, use System Settings > Privacy & Security to allow the local build.
 4. Grant Screen Recording permission when prompted.
@@ -131,7 +131,7 @@ Create a Developer ID build:
 ```bash
 CODESIGN_IDENTITY="Developer ID Application: Your Name" \
 CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
-MARKETING_VERSION="0.2.0" \
+MARKETING_VERSION="0.3.0" \
 BUILD_NUMBER="1" \
 ./script/package_app.sh --distribution developer-id
 ```

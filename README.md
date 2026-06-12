@@ -35,7 +35,7 @@ ClipSight 不上传截图、不调用网络 OCR、不保存识别历史，也不
 ## 截图
 
 <p align="center">
-  <img src="docs/assets/settings-screenshot-placeholder.svg" alt="ClipSight 设置页截图占位">
+  <img src="docs/assets/settings-screenshot-zh.png" alt="ClipSight 设置页截图">
 </p>
 
 ## 系统要求
@@ -46,11 +46,11 @@ ClipSight 不上传截图、不调用网络 OCR、不保存识别历史，也不
 
 ## 安装
 
-0.2 版本提供一个用于早期测试的本地 ad-hoc 签名 app zip。因为它没有使用 Developer ID 签名和公证，macOS Gatekeeper 可能会拦截。
+0.3 版本提供一个用于早期测试的本地 ad-hoc 签名 app zip。因为它没有使用 Developer ID 签名和公证，macOS Gatekeeper 可能会拦截。
 
 本地测试安装：
 
-1. 从 release 页面下载 `ClipSight-0.2.0-local.zip`。
+1. 从 release 页面下载 `ClipSight-0.3.0-local.zip`。
 2. 解压后将 `ClipSight.app` 移动到 `/Applications`。
 3. 从 Finder 打开应用。如果 macOS 阻止启动，请在系统设置的“隐私与安全性”中允许该本地构建。
 4. 按提示授予屏幕录制权限。
@@ -131,7 +131,7 @@ script/verify_release.sh --mode local
 ```bash
 CODESIGN_IDENTITY="Developer ID Application: Your Name" \
 CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
-MARKETING_VERSION="0.2.0" \
+MARKETING_VERSION="0.3.0" \
 BUILD_NUMBER="1" \
 ./script/package_app.sh --distribution developer-id
 ```
