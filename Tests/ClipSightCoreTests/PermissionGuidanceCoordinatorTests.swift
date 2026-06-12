@@ -5,6 +5,17 @@ import XCTest
 
 @MainActor
 final class PermissionGuidanceCoordinatorTests: XCTestCase {
+    func testActivationObserverDoesNotCaptureWeakSelfInsideNestedTask() throws {
+        let source = try String(
+            contentsOfFile: "Sources/ClipSightCore/Services/PermissionGuidanceCoordinator.swift",
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(source.contains("guard let coordinator = self"))
+        XCTAssertTrue(source.contains("Task { @MainActor [coordinator] in"))
+        XCTAssertFalse(source.contains("Task { @MainActor in\n                self?.handleApplicationDidBecomeActive()"))
+    }
+
     func testOpensSettingsWindowOnceWhenFirstLaunchIsMissingScreenRecordingPermission() {
         let appState = AppState()
         let permissionService = MutablePermissionService(screenRecordingGranted: false)

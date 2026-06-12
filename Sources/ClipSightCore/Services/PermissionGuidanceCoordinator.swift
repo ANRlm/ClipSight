@@ -52,8 +52,12 @@ public final class PermissionGuidanceCoordinator {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in
-                self?.handleApplicationDidBecomeActive()
+            guard let coordinator = self else {
+                return
+            }
+
+            Task { @MainActor [coordinator] in
+                coordinator.handleApplicationDidBecomeActive()
             }
         }
     }
