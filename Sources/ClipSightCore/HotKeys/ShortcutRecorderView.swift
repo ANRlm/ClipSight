@@ -3,16 +3,19 @@ import SwiftUI
 
 public struct ShortcutRecorderView: View {
     private let currentHotKey: HotKey?
+    private let strings: AppStrings
     private let onRecord: (HotKey) -> Void
     private let onClear: () -> Void
     @State private var isRecording = false
 
     public init(
         currentHotKey: HotKey?,
+        strings: AppStrings = AppStrings(language: .chinese),
         onRecord: @escaping (HotKey) -> Void,
         onClear: @escaping () -> Void
     ) {
         self.currentHotKey = currentHotKey
+        self.strings = strings
         self.onRecord = onRecord
         self.onClear = onClear
     }
@@ -20,14 +23,17 @@ public struct ShortcutRecorderView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center, spacing: 14) {
-                ShortcutKeyDisplay(hotKey: currentHotKey)
+                ShortcutKeyDisplay(hotKey: currentHotKey, strings: strings)
 
                 Spacer(minLength: 12)
 
                 Button {
                     isRecording = true
                 } label: {
-                    Label(isRecording ? "录制中" : "录制", systemImage: isRecording ? "record.circle" : "keyboard")
+                    Label(
+                        isRecording ? strings.shortcutRecordingTitle : strings.shortcutRecordTitle,
+                        systemImage: isRecording ? "record.circle" : "keyboard"
+                    )
                 }
                 .controlSize(.small)
                 .tint(isRecording ? .orange : .accentColor)
@@ -36,7 +42,7 @@ public struct ShortcutRecorderView: View {
                 Button {
                     onClear()
                 } label: {
-                    Label("清除", systemImage: "xmark.circle")
+                    Label(strings.shortcutClearTitle, systemImage: "xmark.circle")
                 }
                 .controlSize(.small)
                 .disabled(currentHotKey == nil)
@@ -52,7 +58,7 @@ public struct ShortcutRecorderView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "record.circle")
                         .font(.caption.weight(.semibold))
-                    Text("按下组合键，Esc 取消")
+                    Text(strings.shortcutRecordingPrompt)
                         .font(.caption.weight(.medium))
                     Spacer(minLength: 0)
                 }
@@ -67,10 +73,11 @@ public struct ShortcutRecorderView: View {
 
 private struct ShortcutKeyDisplay: View {
     let hotKey: HotKey?
+    let strings: AppStrings
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("当前快捷键")
+            Text(strings.currentShortcutTitle)
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
 
@@ -80,7 +87,7 @@ private struct ShortcutKeyDisplay: View {
                         KeyCap(part: part)
                     }
                 } else {
-                    Text("尚未设置")
+                    Text(strings.shortcutNotSet)
                         .font(.callout.weight(.medium))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
@@ -104,7 +111,7 @@ private struct ShortcutKeyDisplay: View {
             }
 
         return modifierParts + [
-            ShortcutPart(symbol: hotKey.keyEquivalent.uppercased(), label: "Key", isPrimary: true)
+            ShortcutPart(symbol: hotKey.keyEquivalent.uppercased(), label: strings.shortcutKeyLabel, isPrimary: true)
         ]
     }
 }

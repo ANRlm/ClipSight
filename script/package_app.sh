@@ -34,7 +34,7 @@ Distributions:
 Developer ID environment:
   CODESIGN_IDENTITY     Required. Developer ID Application signing identity.
   CLIPSIGHT_BUNDLE_ID   Required. Release bundle identifier.
-  MARKETING_VERSION     Optional, defaults to 0.1.0.
+  MARKETING_VERSION     Optional, defaults to 0.2.0.
   BUILD_NUMBER          Optional, defaults to 1.
   NOTARYTOOL_PROFILE    Optional. Keychain profile for xcrun notarytool.
 USAGE
@@ -59,7 +59,7 @@ fi
 
 APP_NAME="ClipSight"
 BUNDLE_ID="${CLIPSIGHT_BUNDLE_ID:-com.local.ClipSight}"
-MARKETING_VERSION="${MARKETING_VERSION:-0.1.0}"
+MARKETING_VERSION="${MARKETING_VERSION:-0.2.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-1}"
 MIN_SYSTEM_VERSION="13.0"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

@@ -165,4 +165,12 @@ final class StatusHUDTests: XCTestCase {
         XCTAssertEqual(StatusHUDPresentation.noText.message, "未识别到文本")
         XCTAssertEqual(StatusHUDPresentation.failure.message, "识别失败")
     }
+
+    func testStatusHUDPresentationMessagesSupportEnglish() {
+        let strings = AppStrings(language: .english)
+
+        XCTAssertEqual(StatusHUDPresentation.success.message(in: strings), "Copied")
+        XCTAssertEqual(StatusHUDPresentation.noText.message(in: strings), "No Text Found")
+        XCTAssertEqual(StatusHUDPresentation.failure.message(in: strings), "Recognition Failed")
+    }
 }

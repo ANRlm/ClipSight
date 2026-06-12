@@ -15,15 +15,18 @@ public final class StatusHUDPresenter: StatusHUDPresenting {
 
     private let displayDuration: TimeInterval
     private let placementProvider: @MainActor () -> HUDPlacement
+    private let stringsProvider: @MainActor () -> AppStrings
     private var window: NSPanel?
     private var dismissTask: Task<Void, Never>?
 
     public init(
         displayDuration: TimeInterval = 1.8,
-        placement: @escaping @MainActor () -> HUDPlacement = { .default }
+        placement: @escaping @MainActor () -> HUDPlacement = { .default },
+        strings: @escaping @MainActor () -> AppStrings = { AppStrings(language: .chinese) }
     ) {
         self.displayDuration = displayDuration
         self.placementProvider = placement
+        self.stringsProvider = strings
     }
 
     public func show(_ presentation: StatusHUDPresentation) {
@@ -41,7 +44,7 @@ public final class StatusHUDPresenter: StatusHUDPresenting {
         )
         let startOrigin = NSPoint(x: finalOrigin.x, y: finalOrigin.y - 8)
 
-        window.contentView = StatusHUDContainerView(presentation: presentation)
+        window.contentView = StatusHUDContainerView(presentation: presentation, strings: stringsProvider())
         window.setFrame(NSRect(origin: startOrigin, size: Self.windowSize), display: true)
         window.alphaValue = 0
         window.orderFrontRegardless()
@@ -162,9 +165,9 @@ final class StatusHUDContainerView: NSView {
         layer?.shadowPath != nil
     }
 
-    init(presentation: StatusHUDPresentation) {
+    init(presentation: StatusHUDPresentation, strings: AppStrings = AppStrings(language: .chinese)) {
         self.contentHostingView = TransparentHostingView(
-            rootView: StatusHUDContentView(presentation: presentation)
+            rootView: StatusHUDContentView(presentation: presentation, strings: strings)
         )
         super.init(frame: NSRect(origin: .zero, size: StatusHUDPresenter.windowSize))
         configureView()
@@ -288,6 +291,7 @@ final class TransparentHostingView<Content: View>: NSHostingView<Content> {
 
 struct StatusHUDContentView: View {
     let presentation: StatusHUDPresentation
+    let strings: AppStrings
     @State private var isVisible = false
 
     var body: some View {
@@ -300,7 +304,7 @@ struct StatusHUDContentView: View {
                 .scaleEffect(isVisible ? 1 : 0.82)
                 .opacity(isVisible ? 1 : 0.78)
 
-            Text(presentation.message)
+            Text(presentation.message(in: strings))
                 .font(.system(size: 17, weight: .semibold, design: .default))
                 .lineLimit(1)
                 .minimumScaleFactor(0.82)
@@ -335,21 +339,24 @@ struct StatusHUDContentView: View {
 struct StatusHUDCapsuleView: View {
     let presentation: StatusHUDPresentation
     let surface: StatusHUDCapsuleSurface
+    let strings: AppStrings
     @Environment(\.colorScheme) private var colorScheme
 
     init(
         presentation: StatusHUDPresentation,
-        surface: StatusHUDCapsuleSurface = .foreground
+        surface: StatusHUDCapsuleSurface = .foreground,
+        strings: AppStrings = AppStrings(language: .chinese)
     ) {
         self.presentation = presentation
         self.surface = surface
+        self.strings = strings
     }
 
     var body: some View {
         ZStack {
             capsuleSurface
 
-            StatusHUDContentView(presentation: presentation)
+            StatusHUDContentView(presentation: presentation, strings: strings)
         }
         .frame(width: StatusHUDPresenter.defaultWindowSize.width, height: StatusHUDPresenter.defaultWindowSize.height)
         .clipShape(Capsule(style: .continuous))

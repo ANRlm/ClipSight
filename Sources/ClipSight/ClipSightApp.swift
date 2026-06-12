@@ -26,12 +26,16 @@ struct ClipSightApp: App {
         let launchAtLoginService = LaunchAtLoginService()
         let hotKeyManager = HotKeyManager()
         let settingsWindowPresenter = SettingsWindowPresenter()
-        let statusHUDPresenter = StatusHUDPresenter(placement: { state.hudPlacement })
+        let statusHUDPresenter = StatusHUDPresenter(
+            placement: { state.hudPlacement },
+            strings: { state.strings }
+        )
         let hudPlacementEditorPresenter = HUDPlacementEditorPresenter(
             placement: { state.hudPlacement },
             onPlacementChange: { placement in
                 state.setHUDPlacement(placement)
-            }
+            },
+            strings: { state.strings }
         )
         let coordinator = CaptureOCRCoordinator(
             appState: state,
@@ -48,7 +52,7 @@ struct ClipSightApp: App {
                 try hotKeyManager.register(hotKey)
                 state.hotKeyRegistrationError = nil
             } catch {
-                state.hotKeyRegistrationError = error.localizedDescription
+                state.hotKeyRegistrationError = state.strings.errorMessage(for: error)
             }
         }
 
@@ -69,7 +73,7 @@ struct ClipSightApp: App {
                 state.launchAtLoginEnabled = launchAtLoginService.isEnabled
             } catch {
                 state.launchAtLoginEnabled = launchAtLoginService.isEnabled
-                state.lastMessage = error.localizedDescription
+                state.lastMessage = state.strings.errorMessage(for: error)
             }
         }
 
@@ -82,19 +86,20 @@ struct ClipSightApp: App {
             let report = DiagnosticReportBuilder.makeReport(appState: state)
             do {
                 _ = try ClipboardService().write(report)
-                state.lastMessage = "已复制诊断信息"
+                state.lastMessage = state.strings.copiedDiagnosticsMessage
             } catch {
-                state.lastMessage = error.localizedDescription
+                state.lastMessage = state.strings.errorMessage(for: error)
             }
         }
 
         let openSettingsWindow: @MainActor () -> Void = {
-            settingsWindowPresenter.show {
+            settingsWindowPresenter.show(title: state.strings.settingsWindowTitle) {
                 SettingsView(
                     appState: state,
                     onRecordHotKey: updateHotKey,
                     onClearHotKey: clearHotKey,
                     onSetLaunchAtLogin: setLaunchAtLogin,
+                    onSetLanguageSelection: state.setLanguageSelection,
                     onEditHUDPlacement: hudPlacementEditorPresenter.show,
                     onResetHUDPlacement: state.resetHUDPlacement,
                     onRefreshPermissions: refreshPermissions,
@@ -143,13 +148,16 @@ struct ClipSightApp: App {
             Button {
                 coordinator.startCapture()
             } label: {
-                Label(appState.isCapturing ? "正在识别" : "截图识别", systemImage: "viewfinder")
+                Label(
+                    appState.isCapturing ? appState.strings.capturingActionTitle : appState.strings.captureActionTitle,
+                    systemImage: "viewfinder"
+                )
             }
             .disabled(appState.isCapturing)
 
             Divider()
 
-            Text("快捷键：\(appState.shortcutDisplay)")
+            Text("\(appState.strings.shortcutMenuPrefix): \(appState.shortcutDisplay)")
 
             if let hotKeyRegistrationError = appState.hotKeyRegistrationError {
                 Text(hotKeyRegistrationError)
@@ -164,41 +172,41 @@ struct ClipSightApp: App {
             Button {
                 openSettingsWindowAction()
             } label: {
-                Label("设置...", systemImage: "gearshape")
+                Label(appState.strings.settingsActionTitle, systemImage: "gearshape")
             }
 
             Button {
                 copyDiagnosticsAction()
             } label: {
-                Label("复制诊断信息", systemImage: "doc.on.doc")
+                Label(appState.strings.copyDiagnosticsActionTitle, systemImage: "doc.on.doc")
             }
 
             if isDevelopmentQAMenuEnabled {
                 Divider()
 
-                Menu("开发验证") {
+                Menu(appState.strings.developmentValidationTitle) {
                     Button {
                         statusHUDPresenter.show(.success)
                     } label: {
-                        Label("显示成功 HUD", systemImage: "checkmark.circle")
+                        Label(appState.strings.showSuccessHUDTitle, systemImage: "checkmark.circle")
                     }
 
                     Button {
                         statusHUDPresenter.show(.noText)
                     } label: {
-                        Label("显示无文本 HUD", systemImage: "exclamationmark.circle")
+                        Label(appState.strings.showNoTextHUDTitle, systemImage: "exclamationmark.circle")
                     }
 
                     Button {
                         statusHUDPresenter.show(.failure)
                     } label: {
-                        Label("显示失败 HUD", systemImage: "xmark.circle")
+                        Label(appState.strings.showFailureHUDTitle, systemImage: "xmark.circle")
                     }
 
                     Button {
                         hudPlacementEditorPresenter.show()
                     } label: {
-                        Label("调整 HUD 位置", systemImage: "cursorarrow.motionlines")
+                        Label(appState.strings.adjustHUDPositionTitle, systemImage: "cursorarrow.motionlines")
                     }
                 }
             }
@@ -206,7 +214,7 @@ struct ClipSightApp: App {
             Button {
                 NSApplication.shared.terminate(nil)
             } label: {
-                Label("退出", systemImage: "power")
+                Label(appState.strings.quitActionTitle, systemImage: "power")
             }
         }
     }

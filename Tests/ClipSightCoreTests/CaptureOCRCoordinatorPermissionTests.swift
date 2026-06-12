@@ -116,6 +116,49 @@ final class CaptureOCRCoordinatorPermissionTests: XCTestCase {
         XCTAssertFalse(appState.isCapturing)
     }
 
+    func testUpdatesEnglishMessageWhenTextIsCopiedInEnglishMode() async {
+        let defaults = temporaryDefaults()
+        let appState = AppState(
+            hotKeyStore: HotKeyStore(userDefaults: defaults),
+            hudPlacementStore: HUDPlacementStore(userDefaults: defaults),
+            languageStore: AppLanguageStore(userDefaults: defaults),
+            preferredLanguages: { ["zh-Hans"] }
+        )
+        appState.setLanguageSelection(.english)
+        let permissionService = StubPermissionService(
+            snapshot: PermissionSnapshot(
+                screenRecording: PermissionStatus(
+                    title: "屏幕录制",
+                    detail: "允许读取截图",
+                    isGranted: true
+                ),
+                accessibility: PermissionStatus(
+                    title: "辅助功能",
+                    detail: "允许快捷键",
+                    isGranted: false,
+                    isRequired: false
+                )
+            )
+        )
+        let screenCaptureService = StubScreenCaptureService(result: .captured(URL(fileURLWithPath: "/tmp/capture.png")))
+        let hudPresenter = StubStatusHUDPresenter()
+        let coordinator = CaptureOCRCoordinator(
+            appState: appState,
+            permissionService: permissionService,
+            screenCaptureService: screenCaptureService,
+            ocrService: StubOCRService(text: "hello\nworld"),
+            clipboardService: StubClipboardService(lineCount: 2),
+            temporaryFileCleaner: StubTemporaryFileCleaner(),
+            statusHUDPresenter: hudPresenter
+        )
+
+        await coordinator.captureOnce()
+
+        XCTAssertEqual(appState.lastMessage, "Copied 2 lines")
+        XCTAssertEqual(hudPresenter.shownPresentations, [.success])
+        XCTAssertFalse(appState.isCapturing)
+    }
+
     func testUpdatesMessageWithUnderlyingErrorReasonWhenOCRFails() async {
         let appState = AppState()
         let permissionService = StubPermissionService(
@@ -508,4 +551,11 @@ private struct StubTemporaryFileCleaner: TemporaryFileCleaning {
     }
 
     func remove(_ url: URL) throws {}
+}
+
+private func temporaryDefaults() -> UserDefaults {
+    let suiteName = "ClipSight.CaptureOCRCoordinatorPermissionTests.\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defaults.removePersistentDomain(forName: suiteName)
+    return defaults
 }

@@ -31,7 +31,7 @@
    ```bash
    CODESIGN_IDENTITY="Developer ID Application: Your Name" \
    CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
-   MARKETING_VERSION="0.1.0" \
+   MARKETING_VERSION="0.2.0" \
    BUILD_NUMBER="1" \
    ./script/package_app.sh --distribution developer-id
    ```
@@ -52,7 +52,7 @@
    NOTARYTOOL_PROFILE="clipsight-notary" \
    CODESIGN_IDENTITY="Developer ID Application: Your Name" \
    CLIPSIGHT_BUNDLE_ID="com.example.ClipSight" \
-   MARKETING_VERSION="0.1.0" \
+   MARKETING_VERSION="0.2.0" \
    BUILD_NUMBER="1" \
    ./script/package_app.sh --distribution developer-id
    ```

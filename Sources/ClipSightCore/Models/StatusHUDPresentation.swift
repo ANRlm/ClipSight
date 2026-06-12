@@ -7,13 +7,17 @@ public enum StatusHUDPresentation: Equatable, Sendable {
     case failure
 
     public var message: String {
+        message(in: AppStrings(language: .chinese))
+    }
+
+    public func message(in strings: AppStrings) -> String {
         switch self {
         case .success:
-            "已复制"
+            strings.hudSuccessMessage
         case .noText:
-            "未识别到文本"
+            strings.hudNoTextMessage
         case .failure:
-            "识别失败"
+            strings.hudFailureMessage
         }
     }
 }
@@ -50,7 +54,11 @@ public struct HUDPlacement: Codable, Equatable, Sendable {
     }
 
     var summaryLabel: String {
-        abs(x - 0.5) < 0.001 ? "水平居中" : "自定义"
+        summaryLabel(in: AppStrings(language: .chinese))
+    }
+
+    func summaryLabel(in strings: AppStrings) -> String {
+        abs(x - 0.5) < 0.001 ? strings.placementCenteredLabel : strings.placementCustomLabel
     }
 
     var isValidNormalized: Bool {

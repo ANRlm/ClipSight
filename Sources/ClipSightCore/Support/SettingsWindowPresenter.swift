@@ -19,8 +19,12 @@ public final class SettingsWindowPresenter {
         self.size = size
     }
 
-    public func show<Content: View>(@ViewBuilder content: () -> Content) {
+    public func show<Content: View>(
+        title: String? = nil,
+        @ViewBuilder content: () -> Content
+    ) {
         let window = window ?? makeWindow()
+        window.title = title ?? self.title
         window.contentView = NSHostingView(rootView: content())
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
