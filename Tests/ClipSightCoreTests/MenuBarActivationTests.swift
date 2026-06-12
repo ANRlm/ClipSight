@@ -11,6 +11,13 @@ final class MenuBarActivationTests: XCTestCase {
         XCTAssertFalse(source.contains("MenuBarExtra("))
     }
 
+    func testAppLaunchesWithNonActivatingPolicyForStatusMenuUse() throws {
+        let source = try String(contentsOfFile: "Sources/ClipSight/ClipSightApp.swift", encoding: .utf8)
+
+        XCTAssertTrue(source.contains("NSApp.setActivationPolicy(.prohibited)"))
+        XCTAssertFalse(source.contains("func applicationDidFinishLaunching(_ notification: Notification) {\n        NSApp.setActivationPolicy(.accessory)"))
+    }
+
     @MainActor
     func testStatusMenuRebuildsLocalizedItemsAndDisablesCaptureWhileCapturing() {
         let appState = makeAppState(languageSelection: .english)
@@ -67,11 +74,40 @@ final class MenuBarActivationTests: XCTestCase {
         try performMenuItem(titled: "Settings...", in: controller.menuForTesting)
         try performMenuItem(titled: "Copy Diagnostics", in: controller.menuForTesting)
         try performMenuItem(titled: "Quit", in: controller.menuForTesting)
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
 
         XCTAssertTrue(didCapture)
         XCTAssertTrue(didOpenSettings)
         XCTAssertTrue(didCopyDiagnostics)
         XCTAssertTrue(didQuit)
+    }
+
+    @MainActor
+    func testOpenSettingsActionIsDeferredUntilStatusMenuCloses() throws {
+        let appState = makeAppState(languageSelection: .english)
+        var didOpenSettings = false
+
+        let controller = StatusMenuController(
+            appState: appState,
+            actions: StatusMenuActions(
+                captureOCR: {},
+                openSettings: { didOpenSettings = true },
+                copyDiagnostics: {},
+                quit: {}
+            )
+        )
+        defer {
+            controller.invalidate()
+        }
+
+        controller.menuWillOpen(controller.menuForTesting)
+        try performMenuItem(titled: "Settings...", in: controller.menuForTesting)
+
+        XCTAssertFalse(didOpenSettings)
+
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+
+        XCTAssertTrue(didOpenSettings)
     }
 
     @MainActor

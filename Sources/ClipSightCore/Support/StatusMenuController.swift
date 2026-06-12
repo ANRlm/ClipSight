@@ -195,7 +195,9 @@ public final class StatusMenuController: NSObject, NSMenuDelegate {
     }
 
     @objc private func handleOpenSettings(_ sender: NSMenuItem) {
-        actions.openSettings()
+        Task { @MainActor [actions] in
+            actions.openSettings()
+        }
     }
 
     @objc private func handleCopyDiagnostics(_ sender: NSMenuItem) {

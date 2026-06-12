@@ -5,6 +5,8 @@ import SwiftUI
 public final class SettingsWindowPresenter {
     private let title: String
     private let size: NSSize
+    private let activateApplication: @MainActor () -> Void
+    private let windowDelegate: SettingsWindowCloseDelegate
     private var window: NSWindow?
 
     var windowForTesting: NSWindow? {
@@ -13,10 +15,22 @@ public final class SettingsWindowPresenter {
 
     public init(
         title: String = "ClipSight 设置",
-        size: NSSize = NSSize(width: 660, height: 620)
+        size: NSSize = NSSize(width: 660, height: 620),
+        activateApplication: @escaping @MainActor () -> Void = {
+            NSApp.setActivationPolicy(.accessory)
+            NSRunningApplication.current.activate(options: [
+                .activateAllWindows,
+                .activateIgnoringOtherApps
+            ])
+        },
+        returnToStatusMenuOnly: @escaping @MainActor () -> Void = {
+            NSApp.setActivationPolicy(.prohibited)
+        }
     ) {
         self.title = title
         self.size = size
+        self.activateApplication = activateApplication
+        self.windowDelegate = SettingsWindowCloseDelegate(onClose: returnToStatusMenuOnly)
     }
 
     public func show<Content: View>(
@@ -28,7 +42,7 @@ public final class SettingsWindowPresenter {
         window.contentView = NSHostingView(rootView: content())
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        activateApplication()
     }
 
     public func close() {
@@ -52,8 +66,22 @@ public final class SettingsWindowPresenter {
         window.backgroundColor = .windowBackgroundColor
         window.appearance = nil
         window.isReleasedWhenClosed = false
+        window.delegate = windowDelegate
         window.center()
         self.window = window
         return window
+    }
+}
+
+@MainActor
+private final class SettingsWindowCloseDelegate: NSObject, NSWindowDelegate {
+    private let onClose: @MainActor () -> Void
+
+    init(onClose: @escaping @MainActor () -> Void) {
+        self.onClose = onClose
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        onClose()
     }
 }
