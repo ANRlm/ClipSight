@@ -98,12 +98,13 @@ final class SettingsWindowPresenterTests: XCTestCase {
         XCTAssertEqual(returnToStatusMenuOnlyCount, 1)
     }
 
-    func testDefaultActivationUsesRunningApplicationActivationOptions() throws {
+    func testDefaultActivationUsesRegularPolicyAndRunningApplicationActivationOptions() throws {
         let source = try String(
             contentsOfFile: "Sources/ClipSightCore/Support/SettingsWindowPresenter.swift",
             encoding: .utf8
         )
 
+        XCTAssertTrue(source.contains("NSApp.setActivationPolicy(.regular)"))
         XCTAssertTrue(source.contains("NSRunningApplication.current.activate"))
         XCTAssertTrue(source.contains(".activateAllWindows"))
         XCTAssertTrue(source.contains(".activateIgnoringOtherApps"))

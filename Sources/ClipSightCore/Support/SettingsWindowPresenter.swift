@@ -17,7 +17,7 @@ public final class SettingsWindowPresenter {
         title: String = "ClipSight 设置",
         size: NSSize = NSSize(width: 660, height: 620),
         activateApplication: @escaping @MainActor () -> Void = {
-            NSApp.setActivationPolicy(.accessory)
+            NSApp.setActivationPolicy(.regular)
             NSRunningApplication.current.activate(options: [
                 .activateAllWindows,
                 .activateIgnoringOtherApps
