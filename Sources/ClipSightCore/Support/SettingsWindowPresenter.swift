@@ -48,6 +48,9 @@ public final class SettingsWindowPresenter {
             width: min(size.width, 560),
             height: min(size.height, 420)
         )
+        window.titlebarAppearsTransparent = true
+        window.backgroundColor = .windowBackgroundColor
+        window.appearance = nil
         window.isReleasedWhenClosed = false
         window.center()
         self.window = window
