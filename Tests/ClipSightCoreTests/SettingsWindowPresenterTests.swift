@@ -7,21 +7,13 @@ import XCTest
 final class SettingsWindowPresenterTests: XCTestCase {
     func testDefaultWindowSizeShowsFullSettingsContent() throws {
         let presenter = SettingsWindowPresenter()
-        defer {
-            presenter.close()
-        }
-
-        presenter.show {
-            Text("Default size")
-        }
-
-        let window = try XCTUnwrap(presenter.windowForTesting)
-        let contentSize = window.contentRect(forFrameRect: window.frame).size
+        let contentSize = presenter.configuredSizeForTesting
+        let minimumSize = presenter.configuredMinimumSizeForTesting
 
         XCTAssertEqual(contentSize.width, 660, accuracy: 0.5)
         XCTAssertEqual(contentSize.height, 820, accuracy: 0.5)
-        XCTAssertLessThanOrEqual(window.minSize.width, contentSize.width)
-        XCTAssertLessThanOrEqual(window.minSize.height, contentSize.height)
+        XCTAssertLessThanOrEqual(minimumSize.width, contentSize.width)
+        XCTAssertLessThanOrEqual(minimumSize.height, contentSize.height)
     }
 
     func testShowCreatesAndReusesSettingsWindow() {

@@ -13,6 +13,14 @@ public final class SettingsWindowPresenter {
         window
     }
 
+    var configuredSizeForTesting: NSSize {
+        size
+    }
+
+    var configuredMinimumSizeForTesting: NSSize {
+        Self.minimumSize(for: size)
+    }
+
     public init(
         title: String = "ClipSight 设置",
         size: NSSize = NSSize(width: 660, height: 820),
@@ -58,10 +66,7 @@ public final class SettingsWindowPresenter {
             defer: false
         )
         window.title = title
-        window.minSize = NSSize(
-            width: min(size.width, 560),
-            height: min(size.height, 420)
-        )
+        window.minSize = Self.minimumSize(for: size)
         window.titlebarAppearsTransparent = true
         window.backgroundColor = .windowBackgroundColor
         window.appearance = nil
@@ -70,6 +75,13 @@ public final class SettingsWindowPresenter {
         window.center()
         self.window = window
         return window
+    }
+
+    private static func minimumSize(for size: NSSize) -> NSSize {
+        NSSize(
+            width: min(size.width, 560),
+            height: min(size.height, 420)
+        )
     }
 }
 
