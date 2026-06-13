@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
 usage: script/package_app.sh [--configuration debug|release] [--distribution local]
 
 Builds dist/ClipSight.app with ad-hoc signing and creates
-dist/ClipSight-<version>-local.zip.
+dist/ClipSight-<version>-local.zip and dist/ClipSight-<version>-local.dmg.
 
 Environment:
   MARKETING_VERSION     Optional, defaults to 0.4.0.
@@ -68,6 +68,8 @@ INFO_PLIST="$APP_CONTENTS/Info.plist"
 ICONSET_DIR="$DIST_DIR/AppIcon.iconset"
 ICON_FILE="$APP_RESOURCES/AppIcon.icns"
 ZIP_FILE="$DIST_DIR/$APP_NAME-$MARKETING_VERSION-local.zip"
+DMG_ROOT="$DIST_DIR/dmg-root"
+DMG_FILE="$DIST_DIR/$APP_NAME-$MARKETING_VERSION-local.dmg"
 
 if [[ -z "${SWIFT_BIN:-}" ]]; then
   XCODE_SWIFT="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift"
@@ -87,7 +89,8 @@ BUILD_DIR="$("$SWIFT_BIN" build -c "$CONFIGURATION" --show-bin-path)"
 BUILD_BINARY="$BUILD_DIR/$APP_NAME"
 
 rm -rf "$APP_BUNDLE"
-rm -f "$ZIP_FILE"
+rm -rf "$DMG_ROOT"
+rm -f "$ZIP_FILE" "$DMG_FILE"
 mkdir -p "$APP_MACOS" "$APP_RESOURCES"
 cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
@@ -160,5 +163,17 @@ fi
 
 /usr/bin/ditto -c -k --keepParent "$APP_BUNDLE" "$ZIP_FILE"
 
+mkdir -p "$DMG_ROOT"
+/usr/bin/ditto "$APP_BUNDLE" "$DMG_ROOT/$APP_NAME.app"
+ln -s /Applications "$DMG_ROOT/Applications"
+/usr/bin/hdiutil create \
+  -volname "$APP_NAME $MARKETING_VERSION" \
+  -srcfolder "$DMG_ROOT" \
+  -ov \
+  -format UDZO \
+  "$DMG_FILE" >/dev/null
+rm -rf "$DMG_ROOT"
+
 echo "$APP_BUNDLE"
 echo "$ZIP_FILE"
+echo "$DMG_FILE"

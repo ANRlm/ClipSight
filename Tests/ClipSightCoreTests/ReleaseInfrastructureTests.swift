@@ -7,6 +7,9 @@ final class ReleaseInfrastructureTests: XCTestCase {
 
         XCTAssertTrue(source.contains("--distribution local"))
         XCTAssertTrue(source.contains("$APP_NAME-$MARKETING_VERSION-local.zip"))
+        XCTAssertTrue(source.contains("$APP_NAME-$MARKETING_VERSION-local.dmg"))
+        XCTAssertTrue(source.contains("hdiutil create"))
+        XCTAssertTrue(source.contains("ln -s /Applications"))
         XCTAssertTrue(source.contains("codesign"))
         XCTAssertFalse(source.contains(["developer", "id"].joined(separator: "-")))
         XCTAssertFalse(source.contains(String(["n", "o", "t", "a", "r", "i", "z", "e", "d"])))
@@ -43,13 +46,30 @@ final class ReleaseInfrastructureTests: XCTestCase {
         XCTAssertTrue(releaseScript.contains("--push"))
         XCTAssertTrue(releaseScript.contains("release must be run from main"))
         XCTAssertTrue(releaseScript.contains("ClipSight-$VERSION-local.zip"))
+        XCTAssertTrue(releaseScript.contains("ClipSight-$VERSION-local.dmg"))
+        XCTAssertTrue(releaseScript.contains("gh release create \"$TAG\" \"$ASSET\" \"$DMG_ASSET\""))
         XCTAssertTrue(smokeScript.contains("System Events automation is not available"))
         XCTAssertTrue(smokeScript.contains("settings window lost focus after status menu interaction"))
         XCTAssertTrue(smokeScript.contains("app did not return to background-only mode"))
         XCTAssertTrue(verifyScript.contains("mode must be local"))
         XCTAssertTrue(verifyScript.contains("com.local.ClipSight"))
+        XCTAssertTrue(verifyScript.contains("hdiutil attach"))
+        XCTAssertTrue(verifyScript.contains("hdiutil detach"))
+        XCTAssertTrue(verifyScript.contains("Applications"))
         XCTAssertFalse(verifyScript.contains(String(["n", "o", "t", "a", "r", "i", "z", "e", "d"])))
         XCTAssertFalse(verifyScript.contains(["developer", "id"].joined(separator: "-")))
+    }
+
+    func testPerformanceCheckScriptExposesExpectedLocalAuditFlow() throws {
+        let source = try String(contentsOfFile: "script/perf_check.sh", encoding: .utf8)
+
+        XCTAssertTrue(source.contains("usage: script/perf_check.sh [--app path/to/ClipSight.app]"))
+        XCTAssertTrue(source.contains("CLIPSIGHT_ENABLE_QA_MENU=1"))
+        XCTAssertTrue(source.contains("ps -o rss= -o %cpu="))
+        XCTAssertTrue(source.contains("openSettingsIteration"))
+        XCTAssertTrue(source.contains("showSuccessHUD"))
+        XCTAssertTrue(source.contains("adjustHUDPosition"))
+        XCTAssertTrue(source.contains("RSS delta"))
     }
 
     func testTestScriptFallsBackWhenSwiftPMDoesNotSupportXCTestFeatureFlags() throws {
