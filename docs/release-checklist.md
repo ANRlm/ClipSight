@@ -1,6 +1,6 @@
 # ClipSight Release Checklist
 
-本清单用于发布前确认本地构建、Developer ID 签名、公证和真实安装 smoke test。不要把本地 ad-hoc 包当作正式分发包。
+本清单用于发布 local/ad-hoc 签名的 GitHub Release。
 
 ## Local Build
 
@@ -10,7 +10,7 @@
    ./script/test.sh
    ```
 
-2. 生成本地包：
+2. 生成 local/ad-hoc 包：
 
    ```bash
    MARKETING_VERSION="0.4.0" BUILD_NUMBER="4" ./script/package_app.sh --distribution local
@@ -22,48 +22,7 @@
    script/verify_release.sh --mode local
    ```
 
-   local 模式只要求 app bundle 结构和 codesign 验证通过。`spctl` / Gatekeeper 拒绝本地 ad-hoc 构建是允许结果。
-
-## Developer ID Build
-
-1. 设置正式 bundle id、版本号和 Developer ID 签名身份：
-
-   ```bash
-   CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-   CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
-   MARKETING_VERSION="0.4.0" \
-   BUILD_NUMBER="1" \
-   ./script/package_app.sh --distribution developer-id
-   ```
-
-2. 验证 Developer ID 包：
-
-   ```bash
-   script/verify_release.sh --mode developer-id
-   ```
-
-   developer-id 模式验证 bundle、codesign 和正式 bundle id。Gatekeeper 接受通常需要后续公证。
-
-## Notarized Build
-
-1. 使用已配置的 notarytool keychain profile 构建并提交公证：
-
-   ```bash
-   NOTARYTOOL_PROFILE="clipsight-notary" \
-   CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-   CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
-   MARKETING_VERSION="0.4.0" \
-   BUILD_NUMBER="1" \
-   ./script/package_app.sh --distribution notarized
-   ```
-
-2. 验证已 staple 的 app：
-
-   ```bash
-   script/verify_release.sh --mode notarized
-   ```
-
-   notarized 模式要求 Developer ID 校验、Gatekeeper 校验和 stapler 校验全部通过。
+   `local` 模式只要求 app bundle 结构和 codesign 验证通过。系统拒绝 local/ad-hoc 构建是允许结果。
 
 ## Manual Smoke Test
 
@@ -80,6 +39,12 @@
 
 ## GitHub Release
 
-1. 在 GitHub Actions 中手动运行 `Release` workflow。
-2. `version` 输入正式版本号，例如 `0.4.0`。
-3. 确认 release asset 为 `ClipSight-0.4.0.zip`，且 workflow 中 `script/verify_release.sh --mode notarized` 通过。
+1. 确认当前分支是 `main` 且工作区干净。
+2. 使用受控脚本发布：
+
+   ```bash
+   script/release.sh --version 0.4.0 --build 4 --push
+   ```
+
+3. 确认 GitHub Release asset 为 `ClipSight-0.4.0-local.zip`。
+4. Release notes 必须说明这是 local/ad-hoc 签名构建，首次打开可能需要在 Finder 中 Control-click 或右键选择 `打开`。

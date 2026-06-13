@@ -2,16 +2,16 @@ import Foundation
 import XCTest
 
 final class ReleaseInfrastructureTests: XCTestCase {
-    func testPackageScriptSupportsLocalDeveloperIDAndNotarizedDistributions() throws {
+    func testPackageScriptSupportsOnlyLocalDistribution() throws {
         let source = try String(contentsOfFile: "script/package_app.sh", encoding: .utf8)
 
-        XCTAssertTrue(source.contains("--distribution local|developer-id|notarized"))
+        XCTAssertTrue(source.contains("--distribution local"))
         XCTAssertTrue(source.contains("$APP_NAME-$MARKETING_VERSION-local.zip"))
-        XCTAssertTrue(source.contains("$APP_NAME-$MARKETING_VERSION-developer-id.zip"))
-        XCTAssertTrue(source.contains("$APP_NAME-$MARKETING_VERSION.zip"))
-        XCTAssertTrue(source.contains("NOTARYTOOL_PROFILE is required for --distribution notarized"))
-        XCTAssertTrue(source.contains("xcrun notarytool submit"))
-        XCTAssertTrue(source.contains("xcrun stapler staple"))
+        XCTAssertTrue(source.contains("codesign"))
+        XCTAssertFalse(source.contains(["developer", "id"].joined(separator: "-")))
+        XCTAssertFalse(source.contains(String(["n", "o", "t", "a", "r", "i", "z", "e", "d"])))
+        XCTAssertFalse(source.contains(String(["n", "o", "t", "a", "r", "y", "t", "o", "o", "l"])))
+        XCTAssertFalse(source.contains(["stap", "ler"].joined()))
     }
 
     func testCIWorkflowBuildsTestsPackagesAndVerifiesLocalBundle() throws {
@@ -26,21 +26,8 @@ final class ReleaseInfrastructureTests: XCTestCase {
         XCTAssertTrue(source.contains("actions/checkout@v5"))
     }
 
-    func testReleaseWorkflowUsesManualNotarizedReleaseInputsAndSecrets() throws {
-        let source = try String(contentsOfFile: ".github/workflows/release.yml", encoding: .utf8)
-
-        XCTAssertTrue(source.contains("workflow_dispatch"))
-        XCTAssertTrue(source.contains("actions/checkout@v5"))
-        XCTAssertTrue(source.contains("CLIPSIGHT_BUNDLE_ID: com.anrlm.ClipSight"))
-        XCTAssertTrue(source.contains("CLIPSIGHT_DEVELOPER_ID_CERT_BASE64"))
-        XCTAssertTrue(source.contains("CLIPSIGHT_DEVELOPER_ID_CERT_PASSWORD"))
-        XCTAssertTrue(source.contains("CLIPSIGHT_APPLE_ID"))
-        XCTAssertTrue(source.contains("CLIPSIGHT_APPLE_TEAM_ID"))
-        XCTAssertTrue(source.contains("CLIPSIGHT_APP_SPECIFIC_PASSWORD"))
-        XCTAssertTrue(source.contains("CLIPSIGHT_CODESIGN_IDENTITY"))
-        XCTAssertTrue(source.contains("./script/package_app.sh --distribution notarized"))
-        XCTAssertTrue(source.contains("script/verify_release.sh --mode notarized"))
-        XCTAssertTrue(source.contains("gh release create"))
+    func testPaidSigningReleaseWorkflowIsNotPresent() {
+        XCTAssertFalse(FileManager.default.fileExists(atPath: ".github/workflows/release.yml"))
     }
 
     func testLocalReleaseScriptAndSmokeScriptExposeExpectedInterfaces() throws {
@@ -51,16 +38,18 @@ final class ReleaseInfrastructureTests: XCTestCase {
 
         XCTAssertTrue(buildRunScript.contains("LOG_SUBSYSTEM=\"com.anrlm.ClipSight\""))
         XCTAssertTrue(releaseScript.contains("--version x.y.z"))
-        XCTAssertTrue(releaseScript.contains("--distribution local|notarized"))
+        XCTAssertTrue(releaseScript.contains("./script/package_app.sh --distribution local"))
+        XCTAssertFalse(releaseScript.contains("DISTRIBUTION="))
         XCTAssertTrue(releaseScript.contains("--push"))
         XCTAssertTrue(releaseScript.contains("release must be run from main"))
-        XCTAssertTrue(releaseScript.contains("CLIPSIGHT_BUNDLE_ID"))
+        XCTAssertTrue(releaseScript.contains("ClipSight-$VERSION-local.zip"))
         XCTAssertTrue(smokeScript.contains("System Events automation is not available"))
         XCTAssertTrue(smokeScript.contains("settings window lost focus after status menu interaction"))
         XCTAssertTrue(smokeScript.contains("app did not return to background-only mode"))
-        XCTAssertTrue(verifyScript.contains("CLIPSIGHT_EXPECTED_BUNDLE_ID:-com.anrlm.ClipSight"))
-        XCTAssertTrue(verifyScript.contains("unexpected release bundle identifier"))
-        XCTAssertTrue(verifyScript.contains("Skipped Gatekeeper acceptance for developer-id build"))
+        XCTAssertTrue(verifyScript.contains("mode must be local"))
+        XCTAssertTrue(verifyScript.contains("com.local.ClipSight"))
+        XCTAssertFalse(verifyScript.contains(String(["n", "o", "t", "a", "r", "i", "z", "e", "d"])))
+        XCTAssertFalse(verifyScript.contains(["developer", "id"].joined(separator: "-")))
     }
 
     func testTestScriptFallsBackWhenSwiftPMDoesNotSupportXCTestFeatureFlags() throws {

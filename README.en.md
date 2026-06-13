@@ -46,16 +46,14 @@ ClipSight does not upload screenshots, call network OCR services, keep OCR histo
 
 ## Installation
 
-Starting with the 0.4 release, official builds are Developer ID signed and notarized by Apple. Local ad-hoc builds remain available for development and early testing, but they are not recommended for regular distribution.
+ClipSight GitHub Releases provide a local/ad-hoc signed zip:
 
-For the smoothest local install:
-
-1. Download `ClipSight-0.4.0.zip` from the release page.
+1. Download `ClipSight-0.4.0-local.zip` from the release page.
 2. Unzip it and move `ClipSight.app` to `/Applications`.
 3. Open it from Finder.
 4. Grant Screen Recording permission when prompted.
 
-If you download `ClipSight-0.4.0-local.zip`, that is a local ad-hoc signed build and macOS Gatekeeper may block it. For regular distribution, use the notarized zip without the `local` suffix.
+If macOS says the app cannot be verified or opened, Control-click or right-click `ClipSight.app` in Finder, choose `Open`, then confirm.
 
 ## Usage
 
@@ -112,10 +110,10 @@ CLIPSIGHT_RUN_OCR_INTEGRATION=1 ./script/test.sh --filter OCRServiceIntegrationT
 
 ## Packaging
 
-Create a local ad-hoc signed app bundle:
+Create a local/ad-hoc signed app bundle:
 
 ```bash
-./script/package_app.sh --distribution local
+MARKETING_VERSION="0.4.0" BUILD_NUMBER="4" ./script/package_app.sh --distribution local
 ```
 
 Verify the local bundle:
@@ -124,33 +122,12 @@ Verify the local bundle:
 script/verify_release.sh --mode local
 ```
 
-`local` mode validates bundle structure and code signing. Gatekeeper rejection is allowed for this ad-hoc build mode.
-
-Create a Developer ID build for manual notarization:
-
-```bash
-CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
-MARKETING_VERSION="0.4.0" \
-BUILD_NUMBER="1" \
-./script/package_app.sh --distribution developer-id
-```
-
-Create a notarized release build when a notarytool keychain profile is available:
-
-```bash
-NOTARYTOOL_PROFILE="clipsight-notary" \
-CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
-MARKETING_VERSION="0.4.0" \
-BUILD_NUMBER="1" \
-./script/package_app.sh --distribution notarized
-```
+`local` mode validates bundle structure and code signing. System rejection is allowed for this release model, and the release notes explain how users can open the app manually.
 
 Guarded local release script:
 
 ```bash
-script/release.sh --version 0.4.0 --distribution notarized --push
+script/release.sh --version 0.4.0 --build 4 --push
 ```
 
 Release checklist: [docs/release-checklist.md](docs/release-checklist.md)
@@ -164,7 +141,7 @@ OCR runs on device with Apple Vision. ClipSight does not upload screenshots, doe
 - Missing permission: grant Screen Recording permission in System Settings, then relaunch or return to ClipSight.
 - Shortcut does not fire: confirm the shortcut is recorded and not already reserved by macOS or another app.
 - No text recognized: try a higher contrast or larger text region. Very small, skewed, or complex multi-column content may fail.
-- Local build blocked: local ad-hoc builds can be rejected by Gatekeeper. Developer ID signing and notarization are required for normal distribution.
+- Local build blocked: Control-click or right-click `ClipSight.app` in Finder, choose `Open`, then confirm.
 - Stale permissions after rebuilding: toggle Screen Recording permission off and on for `ClipSight.app`.
 
 ## License

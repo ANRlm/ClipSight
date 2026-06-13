@@ -46,16 +46,14 @@ ClipSight 不上传截图、不调用网络 OCR、不保存识别历史，也不
 
 ## 安装
 
-0.4 版本开始，正式发布包使用 Developer ID 签名并经过 Apple 公证。本地 ad-hoc 包仍可用于开发和早期测试，但不建议作为普通用户分发包。
+ClipSight 的 GitHub Release 直接提供 local/ad-hoc 签名压缩包：
 
-本地测试安装：
-
-1. 从 release 页面下载 `ClipSight-0.4.0.zip`。
+1. 从 release 页面下载 `ClipSight-0.4.0-local.zip`。
 2. 解压后将 `ClipSight.app` 移动到 `/Applications`。
 3. 从 Finder 打开应用。
 4. 按提示授予屏幕录制权限。
 
-如果下载的是 `ClipSight-0.4.0-local.zip`，这是本地 ad-hoc 签名构建，macOS Gatekeeper 可能会拦截。正式分发请使用不带 `local` 后缀的公证包。
+如果 macOS 首次打开时提示无法验证或无法打开，请在 Finder 中按住 Control 点击 `ClipSight.app`，选择 `打开`，再确认打开。
 
 ## 使用
 
@@ -112,10 +110,10 @@ CLIPSIGHT_RUN_OCR_INTEGRATION=1 ./script/test.sh --filter OCRServiceIntegrationT
 
 ## 打包
 
-创建本地 ad-hoc 签名 app bundle：
+创建 local/ad-hoc 签名 app bundle：
 
 ```bash
-./script/package_app.sh --distribution local
+MARKETING_VERSION="0.4.0" BUILD_NUMBER="4" ./script/package_app.sh --distribution local
 ```
 
 验证本地包：
@@ -124,33 +122,12 @@ CLIPSIGHT_RUN_OCR_INTEGRATION=1 ./script/test.sh --filter OCRServiceIntegrationT
 script/verify_release.sh --mode local
 ```
 
-`local` 模式会验证 bundle 结构和代码签名。Gatekeeper 拒绝 local ad-hoc 构建是允许结果。
-
-创建 Developer ID 待公证构建：
-
-```bash
-CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
-MARKETING_VERSION="0.4.0" \
-BUILD_NUMBER="1" \
-./script/package_app.sh --distribution developer-id
-```
-
-如果已经配置 notarytool keychain profile，可以创建正式公证构建：
-
-```bash
-NOTARYTOOL_PROFILE="clipsight-notary" \
-CODESIGN_IDENTITY="Developer ID Application: Your Name" \
-CLIPSIGHT_BUNDLE_ID="com.anrlm.ClipSight" \
-MARKETING_VERSION="0.4.0" \
-BUILD_NUMBER="1" \
-./script/package_app.sh --distribution notarized
-```
+`local` 模式会验证 bundle 结构和代码签名。系统拒绝 local/ad-hoc 构建是允许结果，发布说明会提示用户如何手动打开。
 
 受控发布脚本：
 
 ```bash
-script/release.sh --version 0.4.0 --distribution notarized --push
+script/release.sh --version 0.4.0 --build 4 --push
 ```
 
 发布检查清单：[docs/release-checklist.md](docs/release-checklist.md)
@@ -164,7 +141,7 @@ OCR 使用 Apple Vision 在本机执行。ClipSight 不上传截图，不保存 
 - 缺少权限：在系统设置中授予屏幕录制权限，然后重新启动或切回 ClipSight。
 - 快捷键无响应：确认快捷键已经录制，并且没有被 macOS 或其他应用占用。
 - 未识别到文本：尝试选择对比度更高、字号更大的区域。过小、倾斜或复杂多列内容可能无法识别。
-- 本地构建被拦截：local ad-hoc 构建可能被 Gatekeeper 拒绝。正式分发需要 Developer ID 签名和公证。
+- 本地构建被拦截：在 Finder 中按住 Control 点击 `ClipSight.app`，选择 `打开`，再确认打开。
 - 重新构建后权限失效：在系统设置中关闭再重新开启 `ClipSight.app` 的屏幕录制权限。
 
 ## License

@@ -4,16 +4,13 @@ set -euo pipefail
 MODE="local"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_BUNDLE="$ROOT_DIR/dist/ClipSight.app"
-EXPECTED_RELEASE_BUNDLE_ID="${CLIPSIGHT_EXPECTED_BUNDLE_ID:-com.anrlm.ClipSight}"
 
 usage() {
   cat >&2 <<'USAGE'
-usage: script/verify_release.sh [--mode local|developer-id|notarized] [--app path/to/ClipSight.app]
+usage: script/verify_release.sh [--mode local] [--app path/to/ClipSight.app]
 
-Modes:
-  local         Require bundle structure and codesign verification. Gatekeeper rejection is allowed.
-  developer-id Require bundle structure, codesign verification, and the official release bundle id.
-  notarized    Require developer-id checks plus Gatekeeper acceptance and stapler validation.
+Validates the local ad-hoc ClipSight.app bundle. Gatekeeper rejection is allowed
+for this release model.
 USAGE
 }
 
@@ -55,8 +52,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "$MODE" != "local" && "$MODE" != "developer-id" && "$MODE" != "notarized" ]]; then
-  fail "mode must be local, developer-id, or notarized"
+if [[ "$MODE" != "local" ]]; then
+  fail "mode must be local"
 fi
 
 [[ -d "$APP_BUNDLE" ]] || fail "app bundle not found: $APP_BUNDLE"
@@ -74,10 +71,7 @@ MIN_SYSTEM_VERSION="$(read_plist LSMinimumSystemVersion)"
 
 [[ "$BUNDLE_NAME" == "ClipSight" ]] || fail "unexpected CFBundleName: $BUNDLE_NAME"
 [[ "$EXECUTABLE_NAME" == "ClipSight" ]] || fail "unexpected CFBundleExecutable: $EXECUTABLE_NAME"
-[[ -n "$BUNDLE_ID" ]] || fail "CFBundleIdentifier is empty"
-if [[ "$MODE" != "local" && "$BUNDLE_ID" != "$EXPECTED_RELEASE_BUNDLE_ID" ]]; then
-  fail "unexpected release bundle identifier: $BUNDLE_ID"
-fi
+[[ "$BUNDLE_ID" == "com.local.ClipSight" ]] || fail "unexpected CFBundleIdentifier: $BUNDLE_ID"
 [[ "$PACKAGE_TYPE" == "APPL" ]] || fail "unexpected CFBundlePackageType: $PACKAGE_TYPE"
 [[ -n "$SHORT_VERSION" ]] || fail "CFBundleShortVersionString is empty"
 [[ -n "$BUILD_NUMBER" ]] || fail "CFBundleVersion is empty"
@@ -96,23 +90,9 @@ if command -v spctl >/dev/null 2>&1; then
   SPCTL_STATUS=$?
   set -e
 
-  if [[ "$MODE" == "local" ]]; then
-    if [[ $SPCTL_STATUS -ne 0 ]]; then
-      echo "Gatekeeper rejected local build as expected/allowed:" >&2
-      printf '%s\n' "$SPCTL_OUTPUT" >&2
-    else
-      printf '%s\n' "$SPCTL_OUTPUT"
-    fi
-  elif [[ "$MODE" == "developer-id" ]]; then
-    echo "Skipped Gatekeeper acceptance for developer-id build; notarization is required for normal distribution." >&2
-    if [[ $SPCTL_STATUS -ne 0 ]]; then
-      printf '%s\n' "$SPCTL_OUTPUT" >&2
-    else
-      printf '%s\n' "$SPCTL_OUTPUT"
-    fi
-  elif [[ $SPCTL_STATUS -ne 0 ]]; then
+  if [[ $SPCTL_STATUS -ne 0 ]]; then
+    echo "Gatekeeper rejected local ad-hoc build as expected/allowed:" >&2
     printf '%s\n' "$SPCTL_OUTPUT" >&2
-    fail "Gatekeeper rejected $MODE build"
   else
     printf '%s\n' "$SPCTL_OUTPUT"
   fi
@@ -120,8 +100,4 @@ else
   echo "spctl not found; skipped Gatekeeper assessment." >&2
 fi
 
-if [[ "$MODE" == "notarized" ]]; then
-  /usr/bin/xcrun stapler validate "$APP_BUNDLE"
-fi
-
-echo "Verified $MODE release: $APP_BUNDLE"
+echo "Verified local release: $APP_BUNDLE"

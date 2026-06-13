@@ -4,18 +4,16 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION=""
 BUILD_NUMBER=""
-DISTRIBUTION="notarized"
 PUSH="false"
 
 usage() {
   cat >&2 <<'USAGE'
-usage: script/release.sh --version x.y.z [--distribution local|notarized] [--build n] [--push]
+usage: script/release.sh --version x.y.z [--build n] [--push]
 
-Creates a guarded ClipSight release build from a clean main checkout.
+Creates a guarded ClipSight local ad-hoc release from a clean main checkout.
 
 Options:
   --version       Required. Marketing version without leading v, for example 0.4.0.
-  --distribution Optional. local or notarized. Defaults to notarized.
   --build         Optional. CFBundleVersion. Defaults to git commit count.
   --push          Push main/tag and create a GitHub release. Without this flag,
                   the script builds, verifies, and creates only a local tag.
@@ -45,14 +43,6 @@ while [[ $# -gt 0 ]]; do
       BUILD_NUMBER="${1#--build=}"
       shift
       ;;
-    --distribution)
-      DISTRIBUTION="${2:-}"
-      shift 2
-      ;;
-    --distribution=*)
-      DISTRIBUTION="${1#--distribution=}"
-      shift
-      ;;
     --push)
       PUSH="true"
       shift
@@ -71,7 +61,6 @@ done
 cd "$ROOT_DIR"
 
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "--version must match x.y.z"
-[[ "$DISTRIBUTION" == "local" || "$DISTRIBUTION" == "notarized" ]] || fail "--distribution must be local or notarized"
 [[ "$(git branch --show-current)" == "main" ]] || fail "release must be run from main"
 git diff --quiet || fail "working tree has unstaged changes"
 git diff --cached --quiet || fail "index has staged changes"
@@ -91,23 +80,11 @@ fi
 
 ./script/test.sh
 
-case "$DISTRIBUTION" in
-  local)
-    MARKETING_VERSION="$VERSION" BUILD_NUMBER="$BUILD_NUMBER" ./script/package_app.sh --distribution local
-    script/verify_release.sh --mode local
-    ASSET="dist/ClipSight-$VERSION-local.zip"
-    ;;
-  notarized)
-    CLIPSIGHT_BUNDLE_ID="${CLIPSIGHT_BUNDLE_ID:-com.anrlm.ClipSight}" \
-    MARKETING_VERSION="$VERSION" \
-    BUILD_NUMBER="$BUILD_NUMBER" \
-    ./script/package_app.sh --distribution notarized
-    script/verify_release.sh --mode notarized
-    ASSET="dist/ClipSight-$VERSION.zip"
-    ;;
-esac
-
+MARKETING_VERSION="$VERSION" BUILD_NUMBER="$BUILD_NUMBER" ./script/package_app.sh --distribution local
+script/verify_release.sh --mode local
+ASSET="dist/ClipSight-$VERSION-local.zip"
 [[ -f "$ASSET" ]] || fail "release asset missing: $ASSET"
+
 git tag -a "$TAG" -m "ClipSight $VERSION"
 
 if [[ "$PUSH" != "true" ]]; then
@@ -120,11 +97,9 @@ NOTES_FILE="$(mktemp)"
 cat > "$NOTES_FILE" <<EOF
 ClipSight $VERSION
 
-$(if [[ "$DISTRIBUTION" == "notarized" ]]; then
-  echo "This release is signed with Developer ID and notarized by Apple."
-else
-  echo "This is a local ad-hoc signed build for testing. Gatekeeper may block it."
-fi)
+This release uses local/ad-hoc signing. macOS may block it on first launch.
+If that happens, open it from Finder with Control-click or right-click,
+then choose Open.
 EOF
 
 git push origin main
