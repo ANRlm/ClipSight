@@ -30,7 +30,7 @@ Builds dist/ClipSight.app with ad-hoc signing and creates
 dist/ClipSight-<version>-local.zip and dist/ClipSight-<version>-local.dmg.
 
 Environment:
-  MARKETING_VERSION     Optional, defaults to 0.4.0.
+  MARKETING_VERSION     Optional, defaults to 0.5.0.
   BUILD_NUMBER          Optional, defaults to 1.
 USAGE
       exit 0
@@ -54,7 +54,7 @@ fi
 
 APP_NAME="ClipSight"
 BUNDLE_ID="com.local.ClipSight"
-MARKETING_VERSION="${MARKETING_VERSION:-0.4.0}"
+MARKETING_VERSION="${MARKETING_VERSION:-0.5.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-1}"
 MIN_SYSTEM_VERSION="13.0"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

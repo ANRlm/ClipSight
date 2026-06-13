@@ -8,6 +8,8 @@ final class ReleaseInfrastructureTests: XCTestCase {
         XCTAssertTrue(source.contains("--distribution local"))
         XCTAssertTrue(source.contains("$APP_NAME-$MARKETING_VERSION-local.zip"))
         XCTAssertTrue(source.contains("$APP_NAME-$MARKETING_VERSION-local.dmg"))
+        XCTAssertTrue(source.contains("MARKETING_VERSION=\"${MARKETING_VERSION:-0.5.0}\""))
+        XCTAssertTrue(source.contains("defaults to 0.5.0"))
         XCTAssertTrue(source.contains("hdiutil create"))
         XCTAssertTrue(source.contains("ln -s /Applications"))
         XCTAssertTrue(source.contains("codesign"))
@@ -41,6 +43,7 @@ final class ReleaseInfrastructureTests: XCTestCase {
 
         XCTAssertTrue(buildRunScript.contains("LOG_SUBSYSTEM=\"com.anrlm.ClipSight\""))
         XCTAssertTrue(releaseScript.contains("--version x.y.z"))
+        XCTAssertTrue(releaseScript.contains("for example 0.5.0"))
         XCTAssertTrue(releaseScript.contains("./script/package_app.sh --distribution local"))
         XCTAssertFalse(releaseScript.contains("DISTRIBUTION="))
         XCTAssertTrue(releaseScript.contains("--push"))

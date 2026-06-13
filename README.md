@@ -38,9 +38,12 @@ ClipSight 不上传截图、不调用网络 OCR、不保存识别历史，也不
   <img src="docs/assets/settings-screenshot-zh.png" alt="ClipSight 设置页截图">
 </p>
 
-## 系统要求
+## 运行要求
 
 - macOS 13 Ventura 或更高版本
+
+## 开发要求
+
 - Xcode 或 Xcode Command Line Tools
 - Swift Package Manager
 

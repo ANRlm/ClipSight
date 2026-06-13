@@ -38,9 +38,12 @@ ClipSight does not upload screenshots, call network OCR services, keep OCR histo
   <img src="docs/assets/settings-screenshot-en.png" alt="ClipSight settings screenshot">
 </p>
 
-## Requirements
+## Runtime Requirements
 
 - macOS 13 Ventura or later
+
+## Development Requirements
+
 - Xcode or Xcode Command Line Tools
 - Swift Package Manager
 

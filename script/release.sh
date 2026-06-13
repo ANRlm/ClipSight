@@ -13,7 +13,7 @@ usage: script/release.sh --version x.y.z [--build n] [--push]
 Creates a guarded ClipSight local ad-hoc release from a clean main checkout.
 
 Options:
-  --version       Required. Marketing version without leading v, for example 0.4.0.
+  --version       Required. Marketing version without leading v, for example 0.5.0.
   --build         Optional. CFBundleVersion. Defaults to git commit count.
   --push          Push main/tag and create a GitHub release. Without this flag,
                   the script builds, verifies, and creates only a local tag.
