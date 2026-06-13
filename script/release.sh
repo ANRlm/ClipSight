@@ -83,7 +83,9 @@ fi
 MARKETING_VERSION="$VERSION" BUILD_NUMBER="$BUILD_NUMBER" ./script/package_app.sh --distribution local
 script/verify_release.sh --mode local
 ASSET="dist/ClipSight-$VERSION-local.zip"
+DMG_ASSET="dist/ClipSight-$VERSION-local.dmg"
 [[ -f "$ASSET" ]] || fail "release asset missing: $ASSET"
+[[ -f "$DMG_ASSET" ]] || fail "release asset missing: $DMG_ASSET"
 
 git tag -a "$TAG" -m "ClipSight $VERSION"
 
@@ -98,13 +100,14 @@ cat > "$NOTES_FILE" <<EOF
 ClipSight $VERSION
 
 This release uses local/ad-hoc signing. macOS may block it on first launch.
-If that happens, open it from Finder with Control-click or right-click,
-then choose Open.
+Download the DMG for the normal drag-to-Applications install flow, or the zip
+as a fallback. If macOS blocks the app, open it from Finder with Control-click
+or right-click, then choose Open.
 EOF
 
 git push origin main
 git push origin "$TAG"
-gh release create "$TAG" "$ASSET" \
+gh release create "$TAG" "$ASSET" "$DMG_ASSET" \
   --repo ANRlm/ClipSight \
   --title "ClipSight $VERSION" \
   --notes-file "$NOTES_FILE"

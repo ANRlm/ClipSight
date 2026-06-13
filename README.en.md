@@ -46,12 +46,14 @@ ClipSight does not upload screenshots, call network OCR services, keep OCR histo
 
 ## Installation
 
-ClipSight GitHub Releases provide a local/ad-hoc signed zip:
+ClipSight GitHub Releases provide a local/ad-hoc signed installer:
 
-1. Download `ClipSight-0.4.0-local.zip` from the release page.
-2. Unzip it and move `ClipSight.app` to `/Applications`.
+1. Download `ClipSight-0.5.0-local.dmg` from the release page.
+2. Open the DMG and drag `ClipSight.app` to `Applications`.
 3. Open it from Finder.
 4. Grant Screen Recording permission when prompted.
+
+If the DMG does not work for your setup, download `ClipSight-0.5.0-local.zip`, unzip it, and move the app to `/Applications` manually.
 
 If macOS says the app cannot be verified or opened, Control-click or right-click `ClipSight.app` in Finder, choose `Open`, then confirm.
 
@@ -110,10 +112,10 @@ CLIPSIGHT_RUN_OCR_INTEGRATION=1 ./script/test.sh --filter OCRServiceIntegrationT
 
 ## Packaging
 
-Create a local/ad-hoc signed app bundle:
+Create a local/ad-hoc signed app bundle, zip, and DMG:
 
 ```bash
-MARKETING_VERSION="0.4.0" BUILD_NUMBER="4" ./script/package_app.sh --distribution local
+MARKETING_VERSION="0.5.0" BUILD_NUMBER="5" ./script/package_app.sh --distribution local
 ```
 
 Verify the local bundle:
@@ -127,7 +129,7 @@ script/verify_release.sh --mode local
 Guarded local release script:
 
 ```bash
-script/release.sh --version 0.4.0 --build 4 --push
+script/release.sh --version 0.5.0 --build 5 --push
 ```
 
 Release checklist: [docs/release-checklist.md](docs/release-checklist.md)

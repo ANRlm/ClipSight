@@ -101,3 +101,34 @@ else
 fi
 
 echo "Verified local release: $APP_BUNDLE"
+
+APP_PARENT="$(cd "$(dirname "$APP_BUNDLE")" && pwd)"
+DMG_FILE="$APP_PARENT/ClipSight-$SHORT_VERSION-local.dmg"
+[[ -f "$DMG_FILE" ]] || fail "DMG is missing: $DMG_FILE"
+
+ATTACH_PLIST="$(mktemp)"
+MOUNT_POINT=""
+cleanup_dmg_mount() {
+  if [[ -n "$MOUNT_POINT" ]]; then
+    /usr/bin/hdiutil detach "$MOUNT_POINT" -quiet >/dev/null 2>&1 || true
+  fi
+  rm -f "$ATTACH_PLIST"
+}
+trap cleanup_dmg_mount EXIT
+
+/usr/bin/hdiutil attach "$DMG_FILE" -nobrowse -readonly -plist > "$ATTACH_PLIST"
+for index in 0 1 2 3 4 5; do
+  candidate="$(/usr/libexec/PlistBuddy -c "Print :system-entities:$index:mount-point" "$ATTACH_PLIST" 2>/dev/null || true)"
+  if [[ -n "$candidate" ]]; then
+    MOUNT_POINT="$candidate"
+    break
+  fi
+done
+
+[[ -n "$MOUNT_POINT" ]] || fail "could not find mounted DMG volume for $DMG_FILE"
+[[ -d "$MOUNT_POINT/ClipSight.app" ]] || fail "DMG does not contain ClipSight.app"
+[[ -L "$MOUNT_POINT/Applications" ]] || fail "DMG does not contain Applications symlink"
+
+cleanup_dmg_mount
+trap - EXIT
+echo "Verified local DMG: $DMG_FILE"

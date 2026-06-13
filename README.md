@@ -46,12 +46,14 @@ ClipSight 不上传截图、不调用网络 OCR、不保存识别历史，也不
 
 ## 安装
 
-ClipSight 的 GitHub Release 直接提供 local/ad-hoc 签名压缩包：
+ClipSight 的 GitHub Release 直接提供 local/ad-hoc 签名安装包：
 
-1. 从 release 页面下载 `ClipSight-0.4.0-local.zip`。
-2. 解压后将 `ClipSight.app` 移动到 `/Applications`。
+1. 从 release 页面下载 `ClipSight-0.5.0-local.dmg`。
+2. 打开 DMG，将 `ClipSight.app` 拖到 `Applications`。
 3. 从 Finder 打开应用。
 4. 按提示授予屏幕录制权限。
+
+如果 DMG 无法使用，也可以下载 `ClipSight-0.5.0-local.zip`，解压后手动移动到 `/Applications`。
 
 如果 macOS 首次打开时提示无法验证或无法打开，请在 Finder 中按住 Control 点击 `ClipSight.app`，选择 `打开`，再确认打开。
 
@@ -110,10 +112,10 @@ CLIPSIGHT_RUN_OCR_INTEGRATION=1 ./script/test.sh --filter OCRServiceIntegrationT
 
 ## 打包
 
-创建 local/ad-hoc 签名 app bundle：
+创建 local/ad-hoc 签名 app bundle、zip 和 DMG：
 
 ```bash
-MARKETING_VERSION="0.4.0" BUILD_NUMBER="4" ./script/package_app.sh --distribution local
+MARKETING_VERSION="0.5.0" BUILD_NUMBER="5" ./script/package_app.sh --distribution local
 ```
 
 验证本地包：
@@ -127,7 +129,7 @@ script/verify_release.sh --mode local
 受控发布脚本：
 
 ```bash
-script/release.sh --version 0.4.0 --build 4 --push
+script/release.sh --version 0.5.0 --build 5 --push
 ```
 
 发布检查清单：[docs/release-checklist.md](docs/release-checklist.md)
