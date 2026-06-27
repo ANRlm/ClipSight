@@ -13,6 +13,9 @@ final class ReleaseInfrastructureTests: XCTestCase {
         XCTAssertTrue(source.contains("hdiutil create"))
         XCTAssertTrue(source.contains("ln -s /Applications"))
         XCTAssertTrue(source.contains("codesign"))
+        XCTAssertTrue(source.contains("xcode-select -p"))
+        XCTAssertTrue(source.contains("/Applications/Xcode-beta.app/Contents/Developer"))
+        XCTAssertTrue(source.contains("export DEVELOPER_DIR=\"$XCODE_DEVELOPER_DIR\""))
         XCTAssertFalse(source.contains(["developer", "id"].joined(separator: "-")))
         XCTAssertFalse(source.contains(String(["n", "o", "t", "a", "r", "i", "z", "e", "d"])))
         XCTAssertFalse(source.contains(String(["n", "o", "t", "a", "r", "y", "t", "o", "o", "l"])))
@@ -80,6 +83,15 @@ final class ReleaseInfrastructureTests: XCTestCase {
 
         XCTAssertTrue(source.contains("Unknown option '--enable-xctest'"))
         XCTAssertTrue(source.contains("Unknown option '--disable-swift-testing'"))
-        XCTAssertTrue(source.contains(#""$SWIFT_BIN" test "${XCTest_FLAGS[@]}" "$@""#))
+        XCTAssertTrue(source.contains("run_swift_test"))
+        XCTAssertTrue(source.contains("command+=(\"${XCTest_FLAGS[@]}\")"))
+        XCTAssertTrue(source.contains("command+=(\"${ARGS[@]}\")"))
+        XCTAssertTrue(source.contains("xcode-select -p"))
+        XCTAssertTrue(source.contains("/Applications/Xcode-beta.app/Contents/Developer"))
+        XCTAssertTrue(source.contains("export DEVELOPER_DIR=\"$XCODE_DEVELOPER_DIR\""))
+        XCTAssertTrue(source.contains("ClipSightCoreTests.xctest"))
+        XCTAssertTrue(source.contains("$SCRATCH_PATH/out/Products/Debug/$TEST_BUNDLE_NAME"))
+        XCTAssertTrue(source.contains("if [[ ${#XCTEST_ARGS[@]} -gt 0 ]]"))
+        XCTAssertTrue(source.contains("exec \"$XCODE_XCTEST_AGENT\" \"$TEST_BUNDLE\""))
     }
 }

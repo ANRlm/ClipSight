@@ -27,13 +27,26 @@ for ((index = 0; index < ${#ARGS[@]}; index++)); do
 done
 
 if [[ -z "${SWIFT_BIN:-}" ]]; then
-  XCODE_SWIFT="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift"
-  XCODE_SDK="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
-  XCODE_XCTEST_MODULES="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib"
-  XCODE_XCTEST_FRAMEWORKS="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks"
-  XCODE_XCTEST_AGENT="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Xcode/Agents/xctest"
-  if [[ -x "$XCODE_SWIFT" && -d "$XCODE_SDK" ]]; then
+  SELECTED_DEVELOPER_DIR="$(/usr/bin/xcode-select -p 2>/dev/null || true)"
+  XCODE_DEVELOPER_DIRS=(
+    "${DEVELOPER_DIR:-}"
+    "$SELECTED_DEVELOPER_DIR"
+    "/Applications/Xcode.app/Contents/Developer"
+    "/Applications/Xcode-beta.app/Contents/Developer"
+  )
+  for XCODE_DEVELOPER_DIR in "${XCODE_DEVELOPER_DIRS[@]}"; do
+    [[ -n "$XCODE_DEVELOPER_DIR" ]] || continue
+    XCODE_SWIFT="$XCODE_DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift"
+    XCODE_SDK="$XCODE_DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+    XCODE_XCTEST_MODULES="$XCODE_DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/usr/lib"
+    XCODE_XCTEST_FRAMEWORKS="$XCODE_DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/Library/Frameworks"
+    XCODE_XCTEST_AGENT="$XCODE_DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/Library/Xcode/Agents/xctest"
+    if [[ ! -x "$XCODE_SWIFT" || ! -d "$XCODE_SDK" ]]; then
+      continue
+    fi
+
     SWIFT_BIN="$XCODE_SWIFT"
+    export DEVELOPER_DIR="$XCODE_DEVELOPER_DIR"
     export SDKROOT="${SDKROOT:-$XCODE_SDK}"
     FILTERED_FRAMEWORKS="$ROOT_DIR/.build/xctest-frameworks"
     mkdir -p "$FILTERED_FRAMEWORKS"
@@ -51,20 +64,42 @@ if [[ -z "${SWIFT_BIN:-}" ]]; then
       -Xlinker -framework
       -Xlinker XCTest
     )
-  else
+    break
+  done
+
+  if [[ -z "${SWIFT_BIN:-}" ]]; then
     SWIFT_BIN="swift"
   fi
 fi
 
 cd "$ROOT_DIR"
 
+run_swift_test() {
+  local command=("$SWIFT_BIN" test)
+
+  if [[ "${1:-}" == "--with-xctest-feature-flags" ]]; then
+    command+=(--enable-xctest --disable-swift-testing)
+    shift
+  fi
+
+  if [[ ${#XCTest_FLAGS[@]} -gt 0 ]]; then
+    command+=("${XCTest_FLAGS[@]}")
+  fi
+
+  if [[ ${#ARGS[@]} -gt 0 ]]; then
+    command+=("${ARGS[@]}")
+  fi
+
+  "${command[@]}"
+}
+
 set +e
-TEST_OUTPUT="$("$SWIFT_BIN" test --enable-xctest --disable-swift-testing "${XCTest_FLAGS[@]}" "$@" 2>&1)"
+TEST_OUTPUT="$(run_swift_test --with-xctest-feature-flags 2>&1)"
 TEST_STATUS=$?
 if [[ $TEST_STATUS -ne 0 &&
       ( "$TEST_OUTPUT" == *"Unknown option '--enable-xctest'"* ||
         "$TEST_OUTPUT" == *"Unknown option '--disable-swift-testing'"* ) ]]; then
-  TEST_OUTPUT="$("$SWIFT_BIN" test "${XCTest_FLAGS[@]}" "$@" 2>&1)"
+  TEST_OUTPUT="$(run_swift_test 2>&1)"
   TEST_STATUS=$?
 fi
 set -e
@@ -84,9 +119,21 @@ if [[ ! -x "${XCODE_XCTEST_AGENT:-}" ]]; then
   exit "$TEST_STATUS"
 fi
 
-TEST_BUNDLE="$(find "$SCRATCH_PATH" -mindepth 3 -maxdepth 3 -name 'ClipSightPackageTests.xctest' -type d | head -n 1)"
+TEST_BUNDLE=""
+TEST_BUNDLE_NAMES=(ClipSightCoreTests.xctest ClipSightPackageTests.xctest)
+for TEST_BUNDLE_NAME in "${TEST_BUNDLE_NAMES[@]}"; do
+  for TEST_BUNDLE_CANDIDATE in \
+    "$SCRATCH_PATH/out/Products/Debug/$TEST_BUNDLE_NAME" \
+    "$SCRATCH_PATH/debug/$TEST_BUNDLE_NAME"
+  do
+    if [[ -d "$TEST_BUNDLE_CANDIDATE" ]]; then
+      TEST_BUNDLE="$TEST_BUNDLE_CANDIDATE"
+      break 2
+    fi
+  done
+done
 if [[ -z "$TEST_BUNDLE" ]]; then
-  TEST_BUNDLE="$(find "$SCRATCH_PATH" -name 'ClipSightPackageTests.xctest' -type d | head -n 1)"
+  TEST_BUNDLE="$(find "$SCRATCH_PATH" \( -name 'ClipSightCoreTests.xctest' -o -name 'ClipSightPackageTests.xctest' \) -type d | head -n 1)"
 fi
 if [[ -z "$TEST_BUNDLE" ]]; then
   printf '%s\n' "$TEST_OUTPUT" >&2
@@ -102,4 +149,8 @@ if [[ ${#FILTERS[@]} -gt 0 ]]; then
   XCTEST_ARGS=(-XCTest "$joined_filters")
 fi
 
-exec "$XCODE_XCTEST_AGENT" "${XCTEST_ARGS[@]}" "$TEST_BUNDLE"
+if [[ ${#XCTEST_ARGS[@]} -gt 0 ]]; then
+  exec "$XCODE_XCTEST_AGENT" "${XCTEST_ARGS[@]}" "$TEST_BUNDLE"
+fi
+
+exec "$XCODE_XCTEST_AGENT" "$TEST_BUNDLE"

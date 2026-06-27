@@ -72,12 +72,28 @@ DMG_ROOT="$DIST_DIR/dmg-root"
 DMG_FILE="$DIST_DIR/$APP_NAME-$MARKETING_VERSION-local.dmg"
 
 if [[ -z "${SWIFT_BIN:-}" ]]; then
-  XCODE_SWIFT="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift"
-  XCODE_SDK="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
-  if [[ -x "$XCODE_SWIFT" && -d "$XCODE_SDK" ]]; then
+  SELECTED_DEVELOPER_DIR="$(/usr/bin/xcode-select -p 2>/dev/null || true)"
+  XCODE_DEVELOPER_DIRS=(
+    "${DEVELOPER_DIR:-}"
+    "$SELECTED_DEVELOPER_DIR"
+    "/Applications/Xcode.app/Contents/Developer"
+    "/Applications/Xcode-beta.app/Contents/Developer"
+  )
+  for XCODE_DEVELOPER_DIR in "${XCODE_DEVELOPER_DIRS[@]}"; do
+    [[ -n "$XCODE_DEVELOPER_DIR" ]] || continue
+    XCODE_SWIFT="$XCODE_DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift"
+    XCODE_SDK="$XCODE_DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+    if [[ ! -x "$XCODE_SWIFT" || ! -d "$XCODE_SDK" ]]; then
+      continue
+    fi
+
     SWIFT_BIN="$XCODE_SWIFT"
+    export DEVELOPER_DIR="$XCODE_DEVELOPER_DIR"
     export SDKROOT="${SDKROOT:-$XCODE_SDK}"
-  else
+    break
+  done
+
+  if [[ -z "${SWIFT_BIN:-}" ]]; then
     SWIFT_BIN="swift"
   fi
 fi

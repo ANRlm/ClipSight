@@ -18,6 +18,13 @@ final class MenuBarActivationTests: XCTestCase {
         XCTAssertFalse(source.contains("func applicationDidFinishLaunching(_ notification: Notification) {\n        NSApp.setActivationPolicy(.accessory)"))
     }
 
+    func testAppDoesNotRegisterEmptySwiftUISettingsScene() throws {
+        let source = try String(contentsOfFile: "Sources/ClipSight/ClipSightApp.swift", encoding: .utf8)
+
+        XCTAssertFalse(source.contains("Settings {\n            EmptyView()"))
+        XCTAssertFalse(source.contains("var body: some Scene"))
+    }
+
     func testOpenSettingsActionIsDeferredWithMainActorTask() throws {
         let source = try String(contentsOfFile: "Sources/ClipSightCore/Support/StatusMenuController.swift", encoding: .utf8)
 

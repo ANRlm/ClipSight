@@ -1,9 +1,11 @@
 import Foundation
+import ImageIO
 import OSLog
 import Vision
 
 public final class OCRService: TextRecognizing {
     private static let logger = Logger(subsystem: ClipSightLogging.subsystem, category: ClipSightLogging.Category.ocr)
+    private static let minimumRecognizableDimension = 3
 
     public init() {}
 
@@ -11,6 +13,13 @@ public final class OCRService: TextRecognizing {
         try await Task.detached(priority: .userInitiated) {
             let startedAt = Date()
             let recognitionLanguages = ["zh-Hans", "en-US"]
+
+            if let imageSize = Self.imagePixelSize(for: imageURL),
+               imageSize.width < Self.minimumRecognizableDimension || imageSize.height < Self.minimumRecognizableDimension {
+                Self.logger.info("OCR skipped tiny image width=\(imageSize.width, privacy: .public) height=\(imageSize.height, privacy: .public)")
+                throw OCRServiceError.noTextRecognized
+            }
+
             let request = VNRecognizeTextRequest()
             request.recognitionLevel = .accurate
             request.recognitionLanguages = recognitionLanguages
@@ -24,7 +33,7 @@ public final class OCRService: TextRecognizing {
             } catch {
                 let elapsedMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
                 let errorType = String(describing: type(of: error))
-                Self.logger.error("OCR request failed elapsed_ms=\(elapsedMilliseconds, privacy: .public) error_type=\(errorType, privacy: .public)")
+                Self.logger.error("OCR request failed elapsed_ms=\(elapsedMilliseconds, privacy: .public) error_type=\(errorType, privacy: .public) message=\(error.localizedDescription, privacy: .public)")
                 throw OCRServiceError.recognitionFailed(error.localizedDescription)
             }
 
@@ -47,5 +56,16 @@ public final class OCRService: TextRecognizing {
             Self.logger.info("OCR completed elapsed_ms=\(elapsedMilliseconds, privacy: .public) observations=\(observations.count, privacy: .public) lines=\(lines.count, privacy: .public)")
             return text
         }.value
+    }
+
+    private static func imagePixelSize(for imageURL: URL) -> (width: Int, height: Int)? {
+        guard let imageSource = CGImageSourceCreateWithURL(imageURL as CFURL, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? NSNumber,
+              let height = properties[kCGImagePropertyPixelHeight] as? NSNumber else {
+            return nil
+        }
+
+        return (width.intValue, height.intValue)
     }
 }

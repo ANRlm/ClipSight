@@ -5,10 +5,9 @@ import SwiftUI
 
 @main
 @MainActor
-struct ClipSightApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @StateObject private var appState: AppState
-
+final class ClipSightApp: NSObject, NSApplicationDelegate {
+    private let logger = Logger(subsystem: ClipSightLogging.subsystem, category: ClipSightLogging.Category.appLifecycle)
+    private let appState: AppState
     private let hotKeyManager: HotKeyManager
     private let permissionService: PermissionService
     private let launchAtLoginService: LaunchAtLoginService
@@ -19,7 +18,16 @@ struct ClipSightApp: App {
     private let permissionGuidanceCoordinator: PermissionGuidanceCoordinator
     private let statusMenuController: StatusMenuController
 
-    init() {
+    static func main() {
+        let app = NSApplication.shared
+        let delegate = ClipSightApp()
+        app.delegate = delegate
+        withExtendedLifetime(delegate) {
+            app.run()
+        }
+    }
+
+    override init() {
         let state = AppState()
         let permissionService = PermissionService()
         let launchAtLoginService = LaunchAtLoginService()
@@ -139,7 +147,7 @@ struct ClipSightApp: App {
             openSettingsWindow: openSettingsWindow
         )
 
-        _appState = StateObject(wrappedValue: state)
+        self.appState = state
         self.permissionService = permissionService
         self.launchAtLoginService = launchAtLoginService
         self.hotKeyManager = hotKeyManager
@@ -149,6 +157,8 @@ struct ClipSightApp: App {
         self.coordinator = coordinator
         self.permissionGuidanceCoordinator = permissionGuidanceCoordinator
         self.statusMenuController = statusMenuController
+
+        super.init()
 
         permissionGuidanceCoordinator.refreshState()
         permissionGuidanceCoordinator.startObservingApplicationActivation()
@@ -163,16 +173,6 @@ struct ClipSightApp: App {
             permissionGuidanceCoordinator.handleLaunch()
         }
     }
-
-    var body: some Scene {
-        Settings {
-            EmptyView()
-        }
-    }
-}
-
-final class AppDelegate: NSObject, NSApplicationDelegate {
-    private let logger = Logger(subsystem: ClipSightLogging.subsystem, category: ClipSightLogging.Category.appLifecycle)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.prohibited)
